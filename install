@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+BASEDIR=$(dirname $0)
+cd $BASEDIR
+#
+if [ -f ~/.bashrc ]; then
+    ln -s ${PWD}/bashrc ~/.bashrc_inc
+    echo "source ~/.bashrc_inc" >> ~/.bashrc
+else
+    ln -s ${PWD}/bashrc ~/.bashrc
+fi
+
+ln -s ${PWD}terraformrc ~/.terraformrc
