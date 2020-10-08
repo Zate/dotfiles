@@ -1,0 +1,49 @@
+# custom aliases for zsh
+
+# update gloang
+# https://golang.org/dl/go1.15.2.linux-amd64.tar.gz
+# get_go() {
+
+#       sudo rm -rf /usr/local/go
+#       wget -qO- --show-progress --continue $(wget -qO- https://golang.org/dl/ | grep -oP 'https:\/\/dl\.google\.com\/go\/go([0-9\.]+)\.linux-amd64\.tar\.gz' | head -n 1) | sudo tar zxf - -C /usr/local
+#       echo "Create the skeleton for your local users go directory"
+#       mkdir -p ~/go/{bin,pkg,src}
+#       echo "Setting up GOPATH"
+#       echo "export GOPATH=~/go" >> ~/.profile && source ~/.profile
+#       echo "Setting PATH to include golang binaries"
+#       echo "export PATH='$PATH':/usr/local/go/bin:$GOPATH/bin" >> ~/.profile
+#       source ~/.profile
+#       go version
+# }
+
+# get_go
+
+# sed -n "/START-WORD-HERE/,/END-WORD-HERE/p"
+# 
+#sed 's/[^"]*"\([^"]*\).*/\1/'
+#wget -qO- https://golang.org/dl/ | grep "<a class=\"download downloadBox\" href=\"/dl/go1.15.2.linux-amd64.tar.gz\">" | sed  's/^*\/go/([0-9\.]+\.linux-amd64\.tar\gz.*/\1/'
+
+goup () {
+    sudo rm -rf /usr/local/go
+    wget -qO- https://golang.org$( wget -qO- https://golang.org/dl/ | grep -oP '/dl/go([0-9\.]+)\.linux-amd64.tar.gz' | head -1)  | sudo tar zxf - -C /usr/local
+    gopath
+    go version
+}
+
+gopath () {
+    echo 'export GOPATH=$HOME/go' > $ZSH/custom/golang.zsh
+    echo 'export GOROOT=/usr/local/go' >> $ZSH/custom/golang.zsh
+    echo 'export GOBIN=$GOPATH/bin' >> $ZSH/custom/golang.zsh
+    echo 'export PATH=$GOPATH:$GOROOT/bin:$PATH' >> $ZSH/custom/golang.zsh
+    source $ZSH/custom/golang.zsh
+}
+
+proj () {
+    [ ! -d "$GOPATH/src/github.com/Zate/" ] && mkdir -p $GOPATH/src/github.com/Zate/
+    cd $GOPATH/src/github.com/Zate/
+}
+
+export GOPATH=$HOME/go
+export GOROOT=/usr/local/go
+export GOBIN=$GOPATH/bin
+export PATH=$GOPATH:$GOROOT/bin:$PATH
