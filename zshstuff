@@ -47,3 +47,17 @@ export GOPATH=$HOME/go
 export GOROOT=/usr/local/go
 export GOBIN=$GOPATH/bin
 export PATH=$GOPATH:$GOROOT/bin:$PATH
+
+function utf () {
+        TFV=$(wget -qO- https://www.terraform.io/downloads.html | grep -oP 'https://releases.hashicorp.com/terraform/.*_linux_amd64.zip' | sed -e 's/https:\/\/releases\.hashicorp\.com\/terraform\/\([0-9\.]\+\)\/terraform_.*/\1/g')
+        cd ~/bin
+        URL="https://releases.hashicorp.com/terraform/${TFV}/terraform_${TFV}_linux_amd64.zip"
+        wget -q --show-progress --continue $URL 
+        unzip -qqou terraform_${TFV}_linux_amd64.zip
+        echo "Using: `which terraform`"
+        echo "Version: `terraform version`"
+        cd $OLDPWD
+
+}
+export PATH=$HOME/bin:$PATH
+
