@@ -1,12 +1,38 @@
 #!/usr/bin/env bash
+set -e
+set -o errexit
+set -o nounset
+set -o pipefail
+export DEBIAN_FRONTEND=noninteractive
 BASEDIR=$(dirname $0)
 cd $BASEDIR
-#
-if [ -f ~/.bashrc ]; then
-    ln -s ${PWD}/bashrc ~/.bashrc_inc
-    echo "source ~/.bashrc_inc" >> ~/.bashrc
-else
-    ln -s ${PWD}/bashrc ~/.bashrc
-fi
 
-ln -s ${PWD}terraformrc ~/.terraformrc
+# First lets check some defaults
+source scripts/functions
+source scripts/defaults.sh
+echo "Init Complete, starting script"
+# #are we in a container?
+echo "Running check_docker"
+check_docker
+# # Do we have zsh and is it the default?
+echo "Running check_zsh"
+check_zsh
+#[[ $D_ZSH != "" && $D_ZSH = $SHELL ]] && echo "ZSH is installed at $D_ZSH and it is the default" || echo "ZSH is installed at $D_ZSH but default shell is"
+check_golang
+
+
+
+
+
+
+
+
+
+# # if [ -f ~/.bashrc ]; then
+# #     ln -s ${PWD}/bashrc ~/.bashrc_inc
+# #     echo "source ~/.bashrc_inc" >> ~/.bashrc
+# # else
+# #     ln -s ${PWD}/bashrc ~/.bashrc
+# # fi
+
+# # ln -s ${PWD}terraformrc ~/.terraformrc
