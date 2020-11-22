@@ -1,42 +1,64 @@
+#!/usr/bin/env bash
+
 upCodeServer() {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     curl -fsSL https://code-server.dev/install.sh | sh -s --
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
 }
 
 upAWS() {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     pip3 install -U awscli --user
+    [[ $D_DEBUG == true ]] && echo "end upAWS"
 }
 
 
 upGo() {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     sudo rm -rf /usr/local/go
     wget -qO- https://golang.org$( wget -qO- https://golang.org/dl/ | grep -oP '/dl/go([0-9\.]+)\.linux-amd64.tar.gz' | head -1)  | sudo tar zxf - -C /usr/local
     upPath
     go version
+    [[ $D_DEBUG == true ]] && echo "end upGo"
 }
 
 upPath () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     #[[ $(grep -Fx "fi" ~/.bashrc) == "" ]] && echo "stuff" || echo "wat"
+    check_bash_inc
+    [[ $D_BASHINC == false ]] && install_bash_inc
     [[ $(grep -Fx 'source ~/.local/.bash_inc' ~/.bashrc) == "" ]] && echo 'source ~/.local/.bash_inc' >> ~/.bashrc
     [[ $(grep -Fx 'export GOPATH=$HOME/go' ~/.local/.bash_inc) == "" ]] && echo 'export GOPATH=$HOME/go' >> ~/.local/.bash_inc
     [[ $(grep -Fx 'export GOROOT=/usr/local/go' ~/.local/.bash_inc) == "" ]] && echo 'export GOROOT=/usr/local/go' >> ~/.local/.bash_inc
     [[ $(grep -Fx 'export GOBIN=$GOPATH/bin' ~/.local/.bash_inc) == "" ]] && echo 'export GOBIN=$GOPATH/bin' >> ~/.local/.bash_inc
     [[ $(grep -Fx 'export PATH=$GOPATH:$GOROOT/bin:$HOME/bin:$HOME/.local/bin:$PATH' ~/.local/.bash_inc) == "" ]] && echo 'export PATH=$GOPATH:$GOROOT/bin:$HOME/bin:$HOME/.local/bin:$PATH' >> ~/.local/.bash_inc
-    source ~/.local/.bash_inc
+    # set PATH so it includes user's private bin if it exists
+    if [ -d "$HOME/bin" ] ; then
+        PATH="$HOME/bin:$PATH"
+    fi
+
+    # set PATH so it includes user's private bin if it exists
+    if [ -d "$HOME/.local/bin" ] ; then
+        PATH="$HOME/.local/bin:$PATH"
+    fi
+    source ~/.bashrc
+    [[ $D_DEBUG == true ]] && echo "end upPath"
 }
 
 upTerraform() {
-        URL=$(wget -qO- https://www.terraform.io/downloads.html | grep -oP 'https://releases.hashicorp.com/terraform/([0-9\.]+)/terraform_([0-9\.]+)_linux_amd64.zip')
-        cd ~/bin
-        wget -q --continue $URL 
-        unzip -qqou terraform_*_linux_amd64.zip
-        echo "Using: `which terraform`"
-        echo "Version: `terraform version`"
-        cd $OLDPWD
-
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    URL=$(wget -qO- https://www.terraform.io/downloads.html | grep -oP 'https://releases.hashicorp.com/terraform/([0-9\.]+)/terraform_([0-9\.]+)_linux_amd64.zip')
+    cd ~/bin
+    wget -q --continue $URL 
+    unzip -qqou terraform_*_linux_amd64.zip
+    echo "Using: `which terraform`"
+    echo "Version: `terraform version`"
+    cd $OLDPWD
+    [[ $D_DEBUG == true ]] && echo "end upTerraform"
 }
 
 upGoTools() {
-    
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     go get -u github.com/mdempsky/gocode
     go get -u github.com/uudashr/gopkgs/v2/cmd/gopkgs
     go get -u github.com/ramya-rao-a/go-outline
@@ -57,6 +79,75 @@ upGoTools() {
     go get -u golang.org/x/tools/gopls
 
 }
+
+check_docker () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    [[ -f "/.dockerenv" ]] && echo "We are in docker"; export D_DOCK=true || true
+    [[ $D_DEBUG == true ]] && echo "end check_docker"
+    return 0
+}
+
+check_bash_inc () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    [[ -f "/.local/.bash_inc" ]] && echo ".bash_inc installed in ~/.local/"; export D_BASHINC=true || true
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
+
+terragrunt () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    local action=$1
+    shift 1
+    command terragrunt $action "$@" 2>&1 | sed -E "s|$(dirname $(pwd))/||g;s|^\[terragrunt\]( [0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})* ||g;s|(\[.*\]) [0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}|\1|g"
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+}
+
+install_bash_inc () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    [[ ! -d ~/.local ]] && mkdir -p ~/.local
+    [[ -f ~/.local/.bash_inc ]] && return 0 || ln -s ${PWD}/bash_inc ~/.local/.bash_inc
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
+
+install_bash_rc () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    [[ -f ~/.bashrc ]] && ln -s ${PWD}/bashrc ~/.bashrc || echo 'source ~/.local/.bash_inc' >> ~/.bashrc
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
+
+install_go () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
+install_go_tools () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
+install_aws () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
+install_terraform () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
+
+skel_function () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
+
 
 # install_p10k () {
 #     # install powerline10k and fonts etc
@@ -87,4 +178,75 @@ upGoTools() {
 #     echo "start install_omz"
 #     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 #     echo "end install_omz"
+# }
+
+# install_p10k () {
+#     # install powerline10k and fonts etc
+#     echo ""
+# }
+
+# install_zsh () {
+#     # Do magic to install oh my zsh and the nice defaults etc.
+#     sudo DEBIAN_FRONTEND=noninteractive apt-get -qq -y install -o=Dpkg::Use-Pty=0 zsh > /dev/null
+#     D_ZSH=$(which zsh) || true
+# }
+
+
+
+# check_zsh () {
+#     echo " start check_zsh"
+#     D_ZSH=$(which zsh) || true
+#     [[ $D_ZSH == "" ]] && echo "No zsh installed, installing now."; install_zsh || true
+# #    [[ $D_ZSH != "" ]] && chsh -s ${D_ZSH} || true
+#     install_omz || true
+#     echo "end check_zsh"
+# }
+
+# install_omz () {
+#     echo "start install_omz"
+#     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+#     echo "end install_omz"
+# }
+
+# check_golang () {
+#     D_GO=$(go --version) || true
+#     [[ $D_GO == "" ]] && echo "Golang not found, installing now."; install_go || true
+
+# }
+
+# install_go () {
+#     sudo rm -rf /usr/local/go
+#     wget -qO- https://golang.org$( wget -qO- https://golang.org/dl/ | grep -oP '/dl/go([0-9\.]+)\.linux-amd64.tar.gz' | head -1)  | sudo tar zxf - -C /usr/local
+#     mkdir -p ~/go/{bin,pkg,src}
+# #    gopath
+#     go version
+# }
+
+# goup () {
+#    install_go
+# }
+
+# gopath () {
+#     echo 'export GOPATH=$HOME/go' > $ZSH/custom/golang.zsh
+#     echo 'export GOROOT=/usr/local/go' >> $ZSH/custom/golang.zsh
+#     echo 'export GOBIN=$GOPATH/bin' >> $ZSH/custom/golang.zsh
+#     echo 'export PATH=$GOPATH:$GOROOT/bin:$PATH' >> $ZSH/custom/golang.zsh
+#     source $ZSH/custom/golang.zsh
+# }
+
+# proj () {
+#     [ ! -d "$GOPATH/src/github.com/Zate/" ] && mkdir -p $GOPATH/src/github.com/Zate/
+#     cd $GOPATH/src/github.com/Zate/
+# }
+
+# utf () {
+#         TFV=$(wget -qO- https://www.terraform.io/downloads.html | grep -oP 'https://releases.hashicorp.com/terraform/.*_linux_amd64.zip' | sed -e 's/https:\/\/releases\.hashicorp\.com\/terraform\/\([0-9\.]\+\)\/terraform_.*/\1/g')
+#         cd ~/bin
+#         URL="https://releases.hashicorp.com/terraform/${TFV}/terraform_${TFV}_linux_amd64.zip"
+#         wget -q --show-progress --continue $URL 
+#         unzip -qqou terraform_${TFV}_linux_amd64.zip
+#         echo "Using: `which terraform`"
+#         echo "Version: `terraform version`"
+#         cd $OLDPWD
+
 # }
