@@ -4,6 +4,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 export DEBIAN_FRONTEND=noninteractive
+export D_DEBUG=true
 BASEDIR=$(dirname $0)
 cd $BASEDIR
 
@@ -21,7 +22,7 @@ install_aws
 install_terraform
 
 
-ln -s ${PWD}terraformrc ~/.terraformrc
+ln -s ${PWD}/terraformrc ~/.terraformrc
 
 
 

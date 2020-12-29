@@ -32,6 +32,8 @@ upPath () {
     [[ $(grep -Fx 'export GOROOT=/usr/local/go' ~/.local/.bash_inc) == "" ]] && echo 'export GOROOT=/usr/local/go' >> ~/.local/.bash_inc
     [[ $(grep -Fx 'export GOBIN=$GOPATH/bin' ~/.local/.bash_inc) == "" ]] && echo 'export GOBIN=$GOPATH/bin' >> ~/.local/.bash_inc
     [[ $(grep -Fx 'export PATH=$GOPATH:$GOROOT/bin:$HOME/bin:$HOME/.local/bin:$PATH' ~/.local/.bash_inc) == "" ]] && echo 'export PATH=$GOPATH:$GOROOT/bin:$HOME/bin:$HOME/.local/bin:$PATH' >> ~/.local/.bash_inc
+    sudo locale-gen en_US.UTF-8
+    sudo update-locale LANG=en_US.UTF-8
     # set PATH so it includes user's private bin if it exists
     if [ -d "$HOME/bin" ] ; then
         PATH="$HOME/bin:$PATH"
@@ -94,6 +96,18 @@ check_bash_inc () {
     return 0
 }
 
+check_prereqs () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    unset PKGS
+    PKGS="-y apt-utils software-properties-common git curl"
+    [[ ! -f `which unzip` ]] && PKGS="${PKGS} unzip" || true
+    [[ ! -f `which python3` ]] && PKGS="${PKGS} python3" || true
+    export PKGS
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -qq ${PKGS} < /dev/null > /dev/null
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
+
 terragrunt () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     local action=$1
@@ -119,24 +133,33 @@ install_bash_rc () {
 
 install_go () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    upGo
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
 install_go_tools () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
-
+    upGoTools
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
 install_aws () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
-
+    upAWS
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
 install_terraform () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    upTerraform
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
 
+git_config () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    git config --global user.name "Zate"
+    git config --global user.email "zate75@gmail.com"
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
@@ -250,3 +273,7 @@ skel_function () {
 #         cd $OLDPWD
 
 # }
+export GOPATH=$HOME/go
+export GOROOT=/usr/local/go
+export GOBIN=$GOPATH/bin
+export PATH=$GOPATH:$GOROOT/bin:$HOME/bin:$HOME/.local/bin:$PATH
