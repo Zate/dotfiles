@@ -50,6 +50,7 @@ upPath () {
 upTerraform() {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     URL=$(wget -qO- https://www.terraform.io/downloads.html | grep -oP 'https://releases.hashicorp.com/terraform/([0-9\.]+)/terraform_([0-9\.]+)_linux_amd64.zip')
+    [[ ! -d ~/bin ]] && mkdir -p ~/bin
     cd ~/bin
     wget -q --continue $URL 
     unzip -qqou terraform_*_linux_amd64.zip
@@ -102,8 +103,11 @@ check_prereqs () {
     PKGS="-y apt-utils software-properties-common git curl"
     [[ ! -f `which unzip` ]] && PKGS="${PKGS} unzip" || true
     [[ ! -f `which python3` ]] && PKGS="${PKGS} python3" || true
+    [[ ! -f `which pip` ]] && PKGS="${PKGS} python3-pip" || true
     export PKGS
     sudo DEBIAN_FRONTEND=noninteractive apt-get install -qq ${PKGS} < /dev/null > /dev/null
+    [[ ! `which pip` == "${HOME}/bin/pip" ]] && sudo ln `which pip3` ~/bin/pip || true
+    [[ ! -f `which docker-compose` ]] && pip install docker-compose || true
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
