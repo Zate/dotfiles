@@ -8,7 +8,7 @@ upCodeServer() {
 
 upAWS() {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
-    pip3 install -U awscli --user
+    pip install -U awscli --user
     [[ $D_DEBUG == true ]] && echo "end upAWS"
 }
 
