@@ -1,73 +1,65 @@
-install_p10k () {
-    # install powerline10k and fonts etc
-    echo ""
+#!/usr/bin/env bash
+
+unset_d () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    unset D_BASHINC
+    unset D_CHROMEOS
+    unset D_GO
+    unset D_DEBUG
+    unset D_LXD
+    unset D_ZSH
+    unset PKGS
+    unset DEBIAN_FRONTEND
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
 }
 
-install_zsh () {
-    # Do magic to install oh my zsh and the nice defaults etc.
-    sudo DEBIAN_FRONTEND=noninteractive apt-get -qq -y install -o=Dpkg::Use-Pty=0 zsh > /dev/null
-    D_ZSH=$(which zsh) || true
+check_env () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    [[ -f "/.dockerenv" ]] && export D_DOCKER=true || true
+    [[ -d "/mnt/chromeos" ]] && export D_CHROMEOS=true || true
+    [[ -d "/dev/lxd" ]] && export D_LXD=true || true
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
 }
 
-check_docker () {
-    [[ -f "/.dockerenv" ]] && echo "We are in docker"; export D_DOCK=true || true
-    echo "end check_docker"
+check_bash_inc () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    [[ -f "/.local/.bash_inc" ]] && export D_BASHINC=true || true
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
 }
 
-check_zsh () {
-    echo " start check_zsh"
-    D_ZSH=$(which zsh) || true
-    [[ $D_ZSH == "" ]] && echo "No zsh installed, installing now."; install_zsh || true
+#check_zsh () {
+#    echo " start check_zsh"
+#    D_ZSH=$(which zsh) || true
+#    [[ $D_ZSH == "" ]] && echo "No zsh installed, installing now."; install_zsh || true
 #    [[ $D_ZSH != "" ]] && chsh -s ${D_ZSH} || true
-    install_omz || true
-    echo "end check_zsh"
+#    install_omz || true
+#    echo "end check_zsh"
+#}
+
+skel_function () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    [[ "true" == "true" ]] && true || false
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
 }
 
-install_omz () {
-    echo "start install_omz"
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-    echo "end install_omz"
+check_prereqs () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    check_env
+    check_bash_inc
+    export DEBIAN_FRONTEND=noninteractive
+    PKGS="-y apt-utils software-properties-common git curl"
+    [[ ! -f `which unzip` ]] && PKGS="${PKGS} unzip" || true
+    [[ ! -f `which python3` ]] && PKGS="${PKGS} python3" || true
+    [[ ! -f `which pip` ]] && PKGS="${PKGS} python3-pip" || true
+    export PKGS
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -qq ${PKGS} < /dev/null > /dev/null
+    [[ ! `which pip` == "${HOME}/bin/pip" ]] && sudo ln `which pip3` ~/bin/pip || true
+    
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
 }
 
-check_golang () {
-    D_GO=$(go --version) || true
-    [[ $D_GO == "" ]] && echo "Golang not found, installing now."; install_go || true
-
-}
-
-install_go () {
-    sudo rm -rf /usr/local/go
-    wget -qO- https://golang.org$( wget -qO- https://golang.org/dl/ | grep -oP '/dl/go([0-9\.]+)\.linux-amd64.tar.gz' | head -1)  | sudo tar zxf - -C /usr/local
-    mkdir -p ~/go/{bin,pkg,src}
-#    gopath
-    go version
-}
-
-goup () {
-   install_go
-}
-
-gopath () {
-    echo 'export GOPATH=$HOME/go' > $ZSH/custom/golang.zsh
-    echo 'export GOROOT=/usr/local/go' >> $ZSH/custom/golang.zsh
-    echo 'export GOBIN=$GOPATH/bin' >> $ZSH/custom/golang.zsh
-    echo 'export PATH=$GOPATH:$GOROOT/bin:$PATH' >> $ZSH/custom/golang.zsh
-    source $ZSH/custom/golang.zsh
-}
-
-proj () {
-    [ ! -d "$GOPATH/src/github.com/Zate/" ] && mkdir -p $GOPATH/src/github.com/Zate/
-    cd $GOPATH/src/github.com/Zate/
-}
-
-utf () {
-        TFV=$(wget -qO- https://www.terraform.io/downloads.html | grep -oP 'https://releases.hashicorp.com/terraform/.*_linux_amd64.zip' | sed -e 's/https:\/\/releases\.hashicorp\.com\/terraform\/\([0-9\.]\+\)\/terraform_.*/\1/g')
-        cd ~/bin
-        URL="https://releases.hashicorp.com/terraform/${TFV}/terraform_${TFV}_linux_amd64.zip"
-        wget -q --show-progress --continue $URL 
-        unzip -qqou terraform_${TFV}_linux_amd64.zip
-        echo "Using: `which terraform`"
-        echo "Version: `terraform version`"
-        cd $OLDPWD
-
-}

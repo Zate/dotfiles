@@ -83,35 +83,14 @@ upGoTools() {
 
 }
 
-check_docker () {
+upDockerCompose () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
-    [[ -f "/.dockerenv" ]] && echo "We are in docker"; export D_DOCK=true || true
-    [[ $D_DEBUG == true ]] && echo "end check_docker"
-    return 0
-}
-
-check_bash_inc () {
-    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
-    [[ -f "/.local/.bash_inc" ]] && echo ".bash_inc installed in ~/.local/"; export D_BASHINC=true || true
+    [[ ! -f `which docker-compose` ]] && pip install -U docker-compose || true
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
-    return 0
 }
 
-check_prereqs () {
-    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
-    unset PKGS
-    PKGS="-y apt-utils software-properties-common git curl"
-    [[ ! -f `which unzip` ]] && PKGS="${PKGS} unzip" || true
-    [[ ! -f `which python3` ]] && PKGS="${PKGS} python3" || true
-    [[ ! -f `which pip` ]] && PKGS="${PKGS} python3-pip" || true
-    export PKGS
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -qq ${PKGS} < /dev/null > /dev/null
-    [[ ! `which pip` == "${HOME}/bin/pip" ]] && sudo ln `which pip3` ~/bin/pip || true
-    [[ ! -f `which docker-compose` ]] && pip install docker-compose || true
-    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
-    return 0
-}
 
+# this function formats the verbose output from terragrunt
 terragrunt () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     local action=$1
@@ -168,12 +147,7 @@ git_config () {
     return 0
 }
 
-skel_function () {
-    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
 
-    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
-    return 0
-}
 
 
 # install_p10k () {

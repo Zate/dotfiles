@@ -3,17 +3,16 @@ set -e
 set -o errexit
 set -o nounset
 set -o pipefail
-export DEBIAN_FRONTEND=noninteractive
-export D_DEBUG=true
+source scripts/functions
+source bash_inc
+unset_d
+[[ ${1} == "-d" ]] && export D_DEBUG=true || true
 BASEDIR=$(dirname $0)
 cd $BASEDIR
 
-# First lets check some defaults
-source bash_inc
-echo "Init Complete, starting script"
-# #are we in a container?
-echo "Running check_docker"
-check_docker
+echo "Starting script"
+echo "Running check_prereqs"
+check_prereqs
 install_bash_inc
 install_bash_rc
 install_go
