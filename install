@@ -13,8 +13,7 @@ if [[ $# -gt 0 ]]; then
     [[ "$*" == *"-code"* ]] && echo -n "code" || true
     ARGS=${1:-none}
     [[ ${ARGS} == "-d" ]] && export D_DEBUG=true || true
-    echo $*
-    exit 0
+    [[ "$*" == *"-test"* ]] && echo -n "$*"; exit 0 || true
 fi
 
 source scripts/functions
