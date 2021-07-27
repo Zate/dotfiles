@@ -18,7 +18,8 @@ echo "Running check_prereqs"
 check_prereqs
 install_bash_inc
 install_bash_rc
-install_go
+checkVersions
+[[ $IGO == true ]] && install_go || true
 install_go_tools
 install_aws
 install_terraform

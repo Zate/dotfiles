@@ -9,7 +9,32 @@ upCodeServer() {
 upAWS() {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     pip install -U awscli --user
-    [[ $D_DEBUG == true ]] && echo "end upAWS"
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+}
+
+checkVersions () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    #Set defaults
+    IGO=false
+    ICODE=false
+    IAWS=false
+    ITF=false
+    IDC=false
+    IDOCKER=false
+    RGO=$(wget -qO- https://golang.org/dl/ | grep -oP '/dl/go([0-9\.]+)\.linux-amd64.tar.gz' | grep -oP 'go[0-9\.]+' | grep -oP '[0-9\.]+' | head -1 | sed 's/\.$//')
+    LGO=$(/usr/local/go/bin/go version | grep -oP 'go[0-9\.]+' | grep -oP '[0-9\.]+' | head -1 | sed 's/\.$//')
+    [[ ! $LGO == $RGO ]] && export IGO=true || true
+
+
+
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+
+}
+
+upDocker () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
 }
 
 
@@ -19,7 +44,7 @@ upGo() {
     wget -qO- https://golang.org$( wget -qO- https://golang.org/dl/ | grep -oP '/dl/go([0-9\.]+)\.linux-amd64.tar.gz' | head -1)  | sudo tar zxf - -C /usr/local
     upPath
     go version
-    [[ $D_DEBUG == true ]] && echo "end upGo"
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
 }
 
 upPath () {
@@ -44,7 +69,7 @@ upPath () {
         PATH="$HOME/.local/bin:$PATH"
     fi
     source ~/.bashrc
-    [[ $D_DEBUG == true ]] && echo "end upPath"
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
 }
 
 upTerraform() {
@@ -57,7 +82,7 @@ upTerraform() {
     echo "Using: `which terraform`"
     echo "Version: `terraform version`"
     cd $OLDPWD
-    [[ $D_DEBUG == true ]] && echo "end upTerraform"
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
 }
 
 upGoTools() {
@@ -80,7 +105,7 @@ upGoTools() {
     go get -u github.com/sqs/goreturns
     go get -u golang.org/x/lint/golint
     go get -u golang.org/x/tools/gopls
-
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
 }
 
 upDockerCompose () {
