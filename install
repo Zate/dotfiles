@@ -6,6 +6,11 @@ set -o pipefail
 D_DEBUG=false
 ARGS=""
 if [[ $# -gt 0 ]]; then
+    [[ "$*" == *"-go"* ]] && echo -n "go";|| true
+    [[ "$*" == *"-aws"* ]] && echo -n "aws";|| true
+    [[ "$*" == *"-tf"* ]] && echo -n "tf";|| true
+    [[ "$*" == *"-docker"* ]] && echo -n "docker";|| true
+    [[ "$*" == *"-code"* ]] && echo -n "code";|| true
     ARGS=${1:-none}
     [[ ${ARGS} == "-d" ]] && export D_DEBUG=true || true
     echo $*
