@@ -15,15 +15,15 @@ upAWS() {
 checkVersions () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     #Set defaults
-    IGO=false
-    ICODESERVER=false
-    IAWS=false
-    ITF=false
-    IDC=false
-    IDOCKER=false
+    # IGO=false
+    # ICODESERVER=false
+    # IAWS=false
+    # ITF=false
+    # IDC=false
+    # IDOCKER=false
     RGO=$(wget -qO- https://golang.org/dl/ | grep -oP '/dl/go([0-9\.]+)\.linux-amd64.tar.gz' | grep -oP 'go[0-9\.]+' | grep -oP '[0-9\.]+' | head -1 | sed 's/\.$//')
     LGO=$(/usr/local/go/bin/go version | grep -oP 'go[0-9\.]+' | grep -oP '[0-9\.]+' | head -1 | sed 's/\.$//')
-    [[ ! $LGO == $RGO ]] && export IGO=true || true
+    [[ ! $LGO == $RGO ]] && IGO=true || IGO=false
 
 
 
