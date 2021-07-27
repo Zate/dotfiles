@@ -49,7 +49,7 @@ check_prereqs () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     check_env
     check_bash_inc
-    [[ -d == ~/bin ]] && mkdir -p ~/bin || true
+    [[ ! -d "~/bin" ]] && mkdir -p ~/bin || true
     export DEBIAN_FRONTEND=noninteractive
     PKGS="-y apt-utils software-properties-common git curl"
     [[ ! -f `which unzip` ]] && PKGS="${PKGS} unzip" || true
