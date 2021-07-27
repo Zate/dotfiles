@@ -102,7 +102,7 @@ terragrunt () {
 install_bash_inc () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     [[ ! -d ~/.local ]] && mkdir -p ~/.local
-    [[ -f ~/.local/.bash_inc ]] && return 0 || ln -s ${PWD}/bash_inc ~/.local/.bash_inc
+    [[ ! -f ~/.local/.bash_inc ]] && return 0 || ln -s ${PWD}/bash_inc ~/.local/.bash_inc
     cp scripts/functions ~/.local/.functions
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
@@ -110,7 +110,7 @@ install_bash_inc () {
 
 install_bash_rc () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
-    [[ -f ~/.bashrc ]] && ln -s ${PWD}/bashrc ~/.bashrc || echo 'source ~/.local/.bash_inc' >> ~/.bashrc
+    [[ ! -f ~/.bashrc ]] && ln -s ${PWD}/bashrc ~/.bashrc || echo 'source ~/.local/.bash_inc' >> ~/.bashrc
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
