@@ -3,10 +3,13 @@ set -e
 set -o errexit
 set -o nounset
 set -o pipefail
+D_DEBUG=false
+ARGS=${1:-none}
+[[ ${ARGS} == "-d" ]] && export D_DEBUG=true || true
 source scripts/functions
 source bash_inc
 unset_d
-[[ ${1} == "-d" ]] && export D_DEBUG=true || true
+
 BASEDIR=$(dirname $0)
 cd $BASEDIR
 

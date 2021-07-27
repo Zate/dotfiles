@@ -2,14 +2,13 @@
 
 unset_d () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
-    unset D_BASHINC
-    unset D_CHROMEOS
-    unset D_GO
-    unset D_DEBUG
-    unset D_LXD
-    unset D_ZSH
-    unset PKGS
-    unset DEBIAN_FRONTEND
+    D_BASHINC=false
+    D_CHROMEOS=false
+    D_GO=false
+    D_LXD=false
+    D_ZSH=false
+    PKGS=""
+    DEBIAN_FRONTEND=""
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
