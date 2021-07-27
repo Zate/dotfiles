@@ -16,7 +16,7 @@ checkVersions () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     #Set defaults
     IGO=false
-    ICODE=false
+    ICODESERVER=false
     IAWS=false
     ITF=false
     IDC=false

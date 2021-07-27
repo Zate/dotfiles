@@ -4,8 +4,14 @@ set -o errexit
 set -o nounset
 set -o pipefail
 D_DEBUG=false
-ARGS=${1:-none}
-[[ ${ARGS} == "-d" ]] && export D_DEBUG=true || true
+ARGS=""
+if [[ $# -gt 0 ]]; then
+    ARGS=${1:-none}
+    [[ ${ARGS} == "-d" ]] && export D_DEBUG=true || true
+    echo $*
+    exit 0
+fi
+
 source scripts/functions
 source bash_inc
 unset_d
@@ -20,9 +26,12 @@ install_bash_inc
 install_bash_rc
 checkVersions
 [[ $IGO == true ]] && install_go || true
-install_go_tools
-install_aws
-install_terraform
+[[ $IGO == true ]] && install_go_tools || true
+[[ $IAWS == true ]] && install_aws || true
+[[ $ITF == true ]] && install_terraform || true
+[[ $IDOCKER = true ]] &% install_docker || true
+[[ $IDC == true ]] && install_docker_compose || true
+[[ $ICODESERVER = true ]] &% install_code_server || true
 
 
 ln -s ${PWD}/terraformrc ~/.terraformrc
