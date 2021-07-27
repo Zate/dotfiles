@@ -103,6 +103,7 @@ install_bash_inc () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     [[ ! -d ~/.local ]] && mkdir -p ~/.local
     [[ -f ~/.local/.bash_inc ]] && return 0 || ln -s ${PWD}/bash_inc ~/.local/.bash_inc
+    cp scripts/functions ~/.local/.functions
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
@@ -113,6 +114,8 @@ install_bash_rc () {
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
+
+
 
 install_go () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
@@ -251,6 +254,9 @@ git_config () {
 #         cd $OLDPWD
 
 # }
+
+[[ -f ~/.local/.functions ]] && source ~/.local/.functions || true
+
 export GOPATH=$HOME/go
 export GOROOT=/usr/local/go
 export GOBIN=$GOPATH/bin
