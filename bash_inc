@@ -74,7 +74,7 @@ upPath () {
 
 upTerraform() {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
-    URL=$(wget -qO- https://www.terraform.io/downloads.html | grep -oP 'https://releases.hashicorp.com/terraform/([0-9\.]+)/terraform_([0-9\.]+)_linux_amd64.zip')
+    URL=$(wget -qO- https://www.terraform.io/downloads.html | grep -oP 'https://releases.hashicorp.com/terraform/([0-9\.]+)/terraform_([0-9\.]+)_linux_amd64.zip' | head -1)
     [[ ! -d ~/bin ]] && mkdir -p ~/bin
     cd ~/bin
     wget -q --continue $URL 
