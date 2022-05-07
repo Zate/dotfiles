@@ -79,6 +79,7 @@ upTerraform() {
     cd ~/bin
     wget -q --continue $URL 
     unzip -qqou terraform_*_linux_amd64.zip
+    rm -rf terraform_*_linux_amd64.zip
     echo "Using: `which terraform`"
     echo "Version: `terraform version`"
     cd $OLDPWD
