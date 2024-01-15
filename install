@@ -1,22 +1,57 @@
 #!/usr/bin/env bash
 set -e
-set -o errexit
-set -o nounset
 set -o pipefail
-D_DEBUG=false
+unset D_DEBUG
 ARGS=""
-if [[ $# -gt 0 ]]; then
-    [[ "$*" == *"-go"* ]] && IGO=true || true
-    [[ "$*" == *"-aws"* ]] && IAWS=true || true
-    [[ "$*" == *"-tf"* ]] && ITF=true || true
-    [[ "$*" == *"-docker"* ]] && IDOCKER=true || true
-    [[ "$*" == *"-code"* ]] && ICODESERVER=true || true
-    [[ "$*" == *"-d "* ]] && D_DEBUG=true || true
-    [[ "$*" == *"-test"* ]] && echo -n "$*"; exit 0 || true
-fi
+
+while getopts ":-:" option; do
+  case "${option}" in
+    -)
+        # echo "OPTARG: ${OPTARG}"
+        case "${OPTARG}" in
+            "go")
+                IGO=true
+                echo "Enabling go"
+                ;;
+            "aws")
+                IAWS=true
+                echo "Enabling aws"
+                ;;
+            "tf")
+                ITF=true
+                echo "Enabling terraform"
+                ;;
+            "docker")
+                IDOCKER=true
+                echo "Enabling docker"
+                ;;
+            "code")
+                ICODESERVER=true
+                echo "Enabling code server"
+                ;;
+            "d")
+                D_DEBUG=true
+                echo "Enabling debug"
+                ;;
+            "test")
+                echo -n "$*"
+                exit 0
+                ;;
+            *)
+                echo "Usage: $0 [-go] [-aws] [-tf] [-docker] [-code] [--d] [-test]"
+                exit 1
+                ;;
+        esac
+        ;;
+    *)
+      echo "Usage: $0 [-go] [-aws] [-tf] [-docker] [-code] [--d] [-test]"
+      exit 1
+      ;;
+  esac
+done
 
 source scripts/functions
-source bash_inc
+source shell_inc
 unset_d
 
 BASEDIR=$(dirname $0)
@@ -25,19 +60,21 @@ cd $BASEDIR
 echo "Starting script"
 echo "Running check_prereqs"
 check_prereqs
-install_bash_inc
-install_bash_rc
+[[ $D_DEBUG == "true" ]] && debug_output || true
+[[ $D_ZSH == "true" && $D_SHELL == "zsh" ]] && install_zsh_inc || install_bash_inc
+[[ $D_ZSH == "true" && $D_SHELL == "zsh" ]] && install_zsh_rc || install_bash_rc
 checkVersions
-[[ $IGO == true ]] && install_go || true
-[[ $IGO == true ]] && install_go_tools || true
-[[ $IAWS == true ]] && install_aws || true
-[[ $ITF == true ]] && install_terraform || true
-[[ $IDOCKER = true ]] &% install_docker || true
-[[ $IDC == true ]] && install_docker_compose || true
-[[ $ICODESERVER = true ]] &% install_code_server || true
+# [[ $IGO == true ]] && install_go || true
+# [[ $IGO == true ]] && install_go_tools || true
+# [[ $IAWS == true ]] && install_aws || true
+# [[ $ITF == true ]] && install_terraform || true
+# [[ $IDOCKER = true ]] && install_docker || true
+# [[ $IDC == true ]] && install_docker_compose || true
+# [[ $ICODESERVER = true ]] && install_code_server || true
 
 
-ln -s ${PWD}/terraformrc ~/.terraformrc
+# ln -s ${PWD}/terraformrc ~/.terraformrc
+
 
 
 

@@ -2,13 +2,18 @@
 
 unset_d () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
-    D_BASHINC=false
+    D_SHELLINC=false
     D_CHROMEOS=false
+    D_MACOS=false
     D_GO=false
     D_LXD=false
     D_ZSH=false
+    D_SHELL="bash"
+    D_OS="debian"
     PKGS=""
     DEBIAN_FRONTEND=""
+    MY_SHELL="/bin/bash"
+    MY_OS="linux"
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
@@ -18,25 +23,49 @@ check_env () {
     [[ -f "/.dockerenv" ]] && export D_DOCKER=true || true
     [[ -d "/mnt/chromeos" ]] && export D_CHROMEOS=true || true
     [[ -d "/dev/lxd" ]] && export D_LXD=true || true
+    [[ -d "/Applications" && -d "/Library" && -d "/System" && -d "/Users" ]] && MY_OS="macos" || true
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
 
-check_bash_inc () {
+check_shell_inc () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
-    [[ -f "/.local/.bash_inc" ]] && export D_BASHINC=true || true
+    [[ -f "/.local/.shell_inc" ]] && export D_SHELLINC=true || true
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
 
-#check_zsh () {
+check_shell () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    MY_SHELL=$(echo $SHELL) || true
+    [[ $MY_SHELL == "/bin/zsh" ]] && D_ZSH=true; D_SHELL="zsh" || true
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
 #    echo " start check_zsh"
 #    D_ZSH=$(which zsh) || true
 #    [[ $D_ZSH == "" ]] && echo "No zsh installed, installing now."; install_zsh || true
 #    [[ $D_ZSH != "" ]] && chsh -s ${D_ZSH} || true
 #    install_omz || true
 #    echo "end check_zsh"
-#}
+}
+
+check_os () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    case "${OSTYPE}" in
+        linux*)
+            D_OS="debian"
+            ;;
+        darwin*)
+            D_OS="macos"
+            ;;
+        *)
+            D_OS="unknown"
+            ;;
+    esac
+    echo $D_OS
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
 
 skel_function () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
@@ -47,19 +76,45 @@ skel_function () {
 
 check_prereqs () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    check_os
     check_env
-    check_bash_inc
-    [[ ! -d "~/bin" ]] && mkdir -p ~/bin || true
-    export DEBIAN_FRONTEND=noninteractive
-    PKGS="-y apt-utils software-properties-common git curl"
-    [[ ! -f `which unzip` ]] && PKGS="${PKGS} unzip" || true
-    [[ ! -f `which python3` ]] && PKGS="${PKGS} python3" || true
-    [[ ! -f `which pip` ]] && PKGS="${PKGS} python3-pip" || true
-    export PKGS
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -qq ${PKGS} < /dev/null > /dev/null
-    [[ ! `which pip` == "${HOME}/bin/pip" ]] && sudo ln `which pip3` ~/bin/pip || true
+    check_shell
+    # check_bash_inc
+    # [[ ! -d "~/bin" ]] && mkdir -p ~/bin || true
+    # export DEBIAN_FRONTEND=noninteractive
+    # PKGS="-y apt-utils software-properties-common git curl"
+    # [[ ! -f `which unzip` ]] && PKGS="${PKGS} unzip" || true
+    # [[ ! -f `which python3` ]] && PKGS="${PKGS} python3" || true
+    # [[ ! -f `which pip` ]] && PKGS="${PKGS} python3-pip" || true
+    # export PKGS
+    # sudo DEBIAN_FRONTEND=noninteractive apt-get install -qq ${PKGS} < /dev/null > /dev/null
+    # [[ ! `which pip` == "${HOME}/bin/pip" ]] && sudo ln `which pip3` ~/bin/pip || true
     
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
+
+init () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    check_os
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
+
+debug_output () {
+    echo "D_DEBUG: $D_DEBUG"
+    echo "D_BASHINC: $D_BASHINC"
+    echo "D_CHROMEOS: $D_CHROMEOS"
+    echo "D_MACOS: $D_MACOS"
+    echo "D_GO: $D_GO"
+    echo "D_LXD: $D_LXD"
+    echo "D_ZSH: $D_ZSH"
+    echo "D_SHELL: $D_SHELL"
+    echo "D_OS: $D_OS"
+    echo "PKGS: $PKGS"
+    echo "DEBIAN_FRONTEND: $DEBIAN_FRONTEND"
+    echo "MY_SHELL: $MY_SHELL"
+    echo "MY_OS: $MY_OS"
     return 0
 }
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 upCodeServer() {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     curl -fsSL https://code-server.dev/install.sh | sh -s --
@@ -50,8 +48,8 @@ upGo() {
 upPath () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     #[[ $(grep -Fx "fi" ~/.bashrc) == "" ]] && echo "stuff" || echo "wat"
-    check_bash_inc
-    [[ $D_BASHINC == false ]] && install_bash_inc
+    check_shell_inc
+    [[ $D_SHELLINC == false ]] && install_shell_inc
     [[ $(grep -Fx 'source ~/.local/.bash_inc' ~/.bashrc) == "" ]] && echo 'source ~/.local/.bash_inc' >> ~/.bashrc
     [[ $(grep -Fx 'export GOPATH=$HOME/go' ~/.local/.bash_inc) == "" ]] && echo 'export GOPATH=$HOME/go' >> ~/.local/.bash_inc
     [[ $(grep -Fx 'export GOROOT=/usr/local/go' ~/.local/.bash_inc) == "" ]] && echo 'export GOROOT=/usr/local/go' >> ~/.local/.bash_inc
