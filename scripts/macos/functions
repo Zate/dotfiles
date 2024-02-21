@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+installMacOS () {
+   [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    checkVersions || true
+    [[ $IBREW == true ]] && installBrew || true
+    [[ $IGO == true ]] && installGo || true
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}

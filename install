@@ -51,19 +51,37 @@ while getopts ":-:" option; do
 done
 
 source scripts/functions
-source shell_inc
+source scripts/shell_inc
 unset_d
 
 BASEDIR=$(dirname $0)
 cd $BASEDIR
 
-echo "Starting script"
+echo "Starting install"
 echo "Running check_prereqs"
 check_prereqs
-[[ $D_DEBUG == "true" ]] && debug_output || true
-[[ $D_ZSH == "true" && $D_SHELL == "zsh" ]] && install_zsh_inc || install_bash_inc
-[[ $D_ZSH == "true" && $D_SHELL == "zsh" ]] && install_zsh_rc || install_bash_rc
-checkVersions
+case "${D_OS}" in
+    linux*)
+        echo "Installing for Linux using apt and Homebrew"
+        source scripts/linux/functions
+        source scripts/linux/shell_inc
+        installLinux
+        ;;
+    macos*)
+        echo "Installing for MacOS using HomeBrew"
+        source scripts/macos/functions
+        source scripts/macos/shell_inc
+        installMacOS
+        ;;
+    *)
+        echo "Unknown operating system"
+        exit 1
+        ;;
+esac
+# [[ $D_ZSH == "true" && $D_SHELL == "zsh" ]] && install_zsh_inc || install_bash_inc
+# [[ $D_ZSH == "true" && $D_SHELL == "zsh" ]] && install_zsh_rc || install_bash_rc
+# [[ $D_ZSH == "true" && $D_SHELL == "zsh" ]] && echo "zsh: $D_SHELL" || echo "bash: $D_SHELL"
+
 # [[ $IGO == true ]] && install_go || true
 # [[ $IGO == true ]] && install_go_tools || true
 # [[ $IAWS == true ]] && install_aws || true
@@ -75,7 +93,7 @@ checkVersions
 
 # ln -s ${PWD}/terraformrc ~/.terraformrc
 
-
+[[ $D_DEBUG == "true" ]] && debug_output || true
 
 
 

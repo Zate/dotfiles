@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+installLinux () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    checkVersions || true
+    [[ $IBREW == true ]] && upBrew || true
+    # [[ $IGO == true ]] && installGo || true
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
+
+# check_bash_inc
+# [[ ! -d "~/bin" ]] && mkdir -p ~/bin || true
+# export DEBIAN_FRONTEND=noninteractive
+# PKGS="-y apt-utils software-properties-common git curl"
+# [[ ! -f `which unzip` ]] && PKGS="${PKGS} unzip" || true
+# [[ ! -f `which python3` ]] && PKGS="${PKGS} python3" || true
+# [[ ! -f `which pip` ]] && PKGS="${PKGS} python3-pip" || true
+# export PKGS
+# sudo DEBIAN_FRONTEND=noninteractive apt-get install -qq ${PKGS} < /dev/null > /dev/null
+# [[ ! `which pip` == "${HOME}/bin/pip" ]] && sudo ln `which pip3` ~/bin/pip || true

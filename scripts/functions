@@ -14,6 +14,9 @@ unset_d () {
     DEBIAN_FRONTEND=""
     MY_SHELL="/bin/bash"
     MY_OS="linux"
+    OS="linux"
+    ARCH="amd64"
+    OS_ARCH="linux-amd64"
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
@@ -23,7 +26,6 @@ check_env () {
     [[ -f "/.dockerenv" ]] && export D_DOCKER=true || true
     [[ -d "/mnt/chromeos" ]] && export D_CHROMEOS=true || true
     [[ -d "/dev/lxd" ]] && export D_LXD=true || true
-    [[ -d "/Applications" && -d "/Library" && -d "/System" && -d "/Users" ]] && MY_OS="macos" || true
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
@@ -37,32 +39,75 @@ check_shell_inc () {
 
 check_shell () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
-    MY_SHELL=$(echo $SHELL) || true
-    [[ $MY_SHELL == "/bin/zsh" ]] && D_ZSH=true; D_SHELL="zsh" || true
+    case "$SHELL" in
+        */bash)
+            SHELL_TYPE="bash"
+            MY_SHELL=$SHELL || true
+            D_BASH=true || true
+            D_SHELL="bash" || true
+            [[ -f "shell/bash/functions" ]] && source shell/bash/functions || true
+            ;;
+        */zsh)
+            SHELL_TYPE="zsh"
+            MY_SHELL=$SHELL || true
+            D_ZSH=true || true
+            D_SHELL="zsh" || true
+            [[ -f "shell/zsh/functions" ]] && source shell/zsh/functions || true
+            ;;
+        *)
+            echo "Unknown shell"
+            exit 1
+            ;;
+    esac
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
-#    echo " start check_zsh"
-#    D_ZSH=$(which zsh) || true
-#    [[ $D_ZSH == "" ]] && echo "No zsh installed, installing now."; install_zsh || true
-#    [[ $D_ZSH != "" ]] && chsh -s ${D_ZSH} || true
-#    install_omz || true
-#    echo "end check_zsh"
 }
 
-check_os () {
+check_os_and_arch () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
-    case "${OSTYPE}" in
+    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+    ARCH=$(uname -m | tr '[:upper:]' '[:lower:]')
+    case "${OS}" in
         linux*)
-            D_OS="debian"
+            D_OS="linux"
+            MY_OS="linux"
             ;;
         darwin*)
             D_OS="macos"
+            MY_OS="macos"
             ;;
         *)
-            D_OS="unknown"
+            echo "Unknown operating system"
+            exit 1
             ;;
     esac
-    echo $D_OS
+    case "${ARCH}" in
+        x86_64*)
+            D_ARCH="amd64"
+            MY_ARCH="amd64"
+            ;;
+        x86)
+            D_ARCH="386"
+            MY_ARCH="386"
+            ;;
+        arm6l*)
+            D_ARCH="arm6l"
+            MY_ARCH="arm6l"
+            ;;
+        arm64*)
+            D_ARCH="arm64"
+            MY_ARCH="arm64"
+            ;;
+        aarch64*)
+            D_ARCH="arm64"
+            MY_ARCH="arm64"
+            ;;
+        *)
+            echo "Unknown architecture"
+            exit 1
+            ;;
+    esac
+    OS_ARCH="${OS}-${ARCH}"
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
@@ -76,27 +121,9 @@ skel_function () {
 
 check_prereqs () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
-    check_os
+    check_os_and_arch
     check_env
     check_shell
-    # check_bash_inc
-    # [[ ! -d "~/bin" ]] && mkdir -p ~/bin || true
-    # export DEBIAN_FRONTEND=noninteractive
-    # PKGS="-y apt-utils software-properties-common git curl"
-    # [[ ! -f `which unzip` ]] && PKGS="${PKGS} unzip" || true
-    # [[ ! -f `which python3` ]] && PKGS="${PKGS} python3" || true
-    # [[ ! -f `which pip` ]] && PKGS="${PKGS} python3-pip" || true
-    # export PKGS
-    # sudo DEBIAN_FRONTEND=noninteractive apt-get install -qq ${PKGS} < /dev/null > /dev/null
-    # [[ ! `which pip` == "${HOME}/bin/pip" ]] && sudo ln `which pip3` ~/bin/pip || true
-    
-    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
-    return 0
-}
-
-init () {
-    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
-    check_os
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
@@ -115,6 +142,9 @@ debug_output () {
     echo "DEBIAN_FRONTEND: $DEBIAN_FRONTEND"
     echo "MY_SHELL: $MY_SHELL"
     echo "MY_OS: $MY_OS"
+    echo "OS: $OS"
+    echo "ARCH: $ARCH"
+    echo "OS_ARCH: $OS_ARCH"
     return 0
 }
 

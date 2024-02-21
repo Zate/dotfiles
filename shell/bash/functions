@@ -1,0 +1,24 @@
+upPath () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    #[[ $(grep -Fx "fi" ~/.bashrc) == "" ]] && echo "stuff" || echo "wat"
+    check_shell_inc
+    [[ $D_SHELLINC == false ]] && install_shell_inc
+    [[ $(grep -Fx 'source ~/.local/.bash_inc' ~/.bashrc) == "" ]] && echo 'source ~/.local/.bash_inc' >> ~/.bashrc
+    [[ $(grep -Fx 'export GOPATH=$HOME/go' ~/.local/.bash_inc) == "" ]] && echo 'export GOPATH=$HOME/go' >> ~/.local/.bash_inc
+    [[ $(grep -Fx 'export GOROOT=/usr/local/go' ~/.local/.bash_inc) == "" ]] && echo 'export GOROOT=/usr/local/go' >> ~/.local/.bash_inc
+    [[ $(grep -Fx 'export GOBIN=$GOPATH/bin' ~/.local/.bash_inc) == "" ]] && echo 'export GOBIN=$GOPATH/bin' >> ~/.local/.bash_inc
+    [[ $(grep -Fx 'export PATH=$GOPATH:$GOROOT/bin:$HOME/bin:$HOME/.local/bin:$PATH' ~/.local/.bash_inc) == "" ]] && echo 'export PATH=$GOPATH:$GOROOT/bin:$HOME/bin:$HOME/.local/bin:$PATH' >> ~/.local/.bash_inc
+    sudo locale-gen en_US.UTF-8
+    sudo update-locale LANG=en_US.UTF-8
+    # set PATH so it includes user's private bin if it exists
+    if [ -d "$HOME/bin" ] ; then
+        PATH="$HOME/bin:$PATH"
+    fi
+
+    # set PATH so it includes user's private bin if it exists
+    if [ -d "$HOME/.local/bin" ] ; then
+        PATH="$HOME/.local/bin:$PATH"
+    fi
+    source ~/.bashrc
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+}
