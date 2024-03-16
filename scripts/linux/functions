@@ -5,6 +5,7 @@ installLinux () {
     checkVersions || true
     [[ $D_GO == true ]] && installGo || true
     installShellInc || true
+    proj || true
     upPath || true
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
@@ -44,4 +45,21 @@ cleanLinux () {
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
+
+proj () {
+    mkdir -p $GOPATH/src/github.com
+    mkdir -p ~/projects/github
+    [[ ! -L "$GOPATH/src/github.com/Zate" ]] && { ln -s $HOME/projects/github $GOPATH/src/github.com/Zate; } || true
+    [[ ! -L "$GOPATH/src/github.com/zate" ]] && { ln -s $HOME/projects/github $GOPATH/src/github.com/zate;  } || true
+}
+
+git_config () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    git config --global user.name "Zate"
+    git config --global user.email "zate75@gmail.com"
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
+
+
 
