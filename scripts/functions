@@ -17,6 +17,7 @@ unset_d () {
     OS="linux"
     ARCH="amd64"
     OS_ARCH="linux-amd64"
+    DOCLEAN=false
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
@@ -107,7 +108,7 @@ check_os_and_arch () {
             exit 1
             ;;
     esac
-    OS_ARCH="${OS}-${ARCH}"
+    OS_ARCH="${OS}-${MY_ARCH}"
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }

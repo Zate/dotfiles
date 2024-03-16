@@ -4,13 +4,22 @@ set -o pipefail
 unset D_DEBUG
 ARGS=""
 
+. scripts/functions
+. scripts/shell_inc
+unset_d
+
+defaults () {
+    echo "Usage: $0 [--go] [--aws] [--tf] [--docker] [--code] [--d] [--test] [--clean]"
+    exit 1
+}
+
 while getopts ":-:" option; do
   case "${option}" in
     -)
-        # echo "OPTARG: ${OPTARG}"
         case "${OPTARG}" in
             "go")
                 IGO=true
+                D_GO=true
                 echo "Enabling go"
                 ;;
             "aws")
@@ -37,41 +46,37 @@ while getopts ":-:" option; do
                 echo -n "$*"
                 exit 0
                 ;;
+            "clean")
+                echo "Cleaning up"
+                DOCLEAN=true
+                ;;
             *)
-                echo "Usage: $0 [-go] [-aws] [-tf] [-docker] [-code] [--d] [-test]"
-                exit 1
+                defaults
                 ;;
         esac
         ;;
     *)
-      echo "Usage: $0 [-go] [-aws] [-tf] [-docker] [-code] [--d] [-test]"
-      exit 1
+      defaults
       ;;
   esac
 done
 
-source scripts/functions
-source scripts/shell_inc
-unset_d
-
 BASEDIR=$(dirname $0)
 cd $BASEDIR
 
-echo "Starting install"
 echo "Running check_prereqs"
 check_prereqs
 case "${D_OS}" in
     linux*)
-        echo "Installing for Linux using apt and Homebrew"
-        source scripts/linux/functions
-        source scripts/linux/shell_inc
-        installLinux
+        . scripts/linux/functions
+        . scripts/linux/shell_inc
+        [[ $DOCLEAN == true ]] && { echo "Cleaning up installed files and entries on Linux"; cleanLinux; } || { echo "Installing for Linux using apt and native installers"; installLinux; }
         ;;
     macos*)
         echo "Installing for MacOS using HomeBrew"
-        source scripts/macos/functions
-        source scripts/macos/shell_inc
-        installMacOS
+        . scripts/macos/functions
+        . scripts/macos/shell_inc
+         [[ $DOCLEAN == true ]] && echo "Not Yet implemented" || installMacOS
         ;;
     *)
         echo "Unknown operating system"

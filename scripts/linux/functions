@@ -3,19 +3,45 @@
 installLinux () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     checkVersions || true
-    [[ $IBREW == true ]] && upBrew || true
-    # [[ $IGO == true ]] && installGo || true
+    [[ $D_GO == true ]] && installGo || true
+    installShellInc || true
+    upPath || true
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
 }
 
-# check_bash_inc
-# [[ ! -d "~/bin" ]] && mkdir -p ~/bin || true
-# export DEBIAN_FRONTEND=noninteractive
-# PKGS="-y apt-utils software-properties-common git curl"
-# [[ ! -f `which unzip` ]] && PKGS="${PKGS} unzip" || true
-# [[ ! -f `which python3` ]] && PKGS="${PKGS} python3" || true
-# [[ ! -f `which pip` ]] && PKGS="${PKGS} python3-pip" || true
-# export PKGS
-# sudo DEBIAN_FRONTEND=noninteractive apt-get install -qq ${PKGS} < /dev/null > /dev/null
-# [[ ! `which pip` == "${HOME}/bin/pip" ]] && sudo ln `which pip3` ~/bin/pip || true
+installGo () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    echo "Installing go"
+    [[ ! -d "/usr/local/go" ]] && sudo mkdir -p /usr/local/go || true
+    [[ ! $DL_URL == "" ]] && curl -fsSL $DL_URL | sudo tar zxf - -C /usr/local || return 1
+    [[ ! -f "/usr/local/go/bin/go" ]] && IGO=true || IGO=false
+    [[ $IGO == true ]] && upGo || true
+    echo "`go version` installed at `which go`"
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
+
+installShellInc () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    [[ ! -d "$HOME/.local" ]] && mkdir -p $HOME/.local || true
+    cp -rp scripts/linux/shell_inc $HOME/.local/.shell_inc
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
+
+cleanLinux () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    [[ -d "/usr/local/go" ]] && { echo "Removing /usr/local/go"; sudo rm -rf /usr/local/go; } || true
+    [[ -f $HOME/.local/.shell_inc ]] && { echo "Removing $HOME/.local/.shell_inc"; rm -f $HOME/.local/.shell_inc; } || true
+    [[ -f $HOME/.local/.bash_inc ]] && { echo "Removing $HOME/.local/.bash_inc"; rm -f $HOME/.local/.bash_inc; } || true
+    [[ -f $HOME/.local/.zsh_inc ]] && { echo "Removing $HOME/.local/.zsh_inc"; rm -f $HOME/.local/.zsh_inc; } || true
+    # Remove 'source ~/.local/.bash_inc' from ~/.bashrc
+    [[ $(grep -Fx "[[ -f \$HOME/.local/.bash_inc ]] && . \$HOME/.local/.bash_inc" ~/.bashrc) != "" ]] && { echo "Removing ~/.bashrc entries"; sed -i '/\[\[ -f \$HOME\/\.local\/\.bash_inc \]\] && \. \$HOME\/\.local\/\.bash_inc/d' ~/.bashrc; } || true
+    # remove '. $HOME/.local/.shell_inc' from $HOME/.bashrc
+    [[ $(grep -Fx "[[ -f \$HOME/.local/.shell_inc ]] && . \$HOME/.local/.shell_inc" ~/.bashrc) != "" ]] && { echo "Removing ~/.bashrc entries"; sed -i '/\[\[ -f \$HOME\/\.local\/\.shell_inc \]\] && \. \$HOME\/\.local\/\.shell_inc/d' ~/.bashrc; } || true
+    # TODO: Remove '. $HOME/.local/.zsh_inc' from $HOME/.zshrc
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
+
