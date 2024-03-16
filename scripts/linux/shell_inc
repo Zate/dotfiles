@@ -46,10 +46,11 @@ upPath () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     [[ ! -d "$HOME/go" ]] && mkdir -p $HOME/go || true
     [[ ! -d "$HOME/.local" ]] && mkdir -p $HOME/.local || true
-    [[ -f $HOME/.local/.bash_inc ]] && { [[ $(grep -Fx 'export GOPATH=$HOME/go' $HOME/.local/.bash_inc) == "" ]] && echo 'export GOPATH=$HOME/go' > $HOME/.local/.bash_inc || true; \
-        [[ $(grep -Fx 'export GOROOT=/usr/local/go' $HOME/.local/.bash_inc) == "" ]] && echo 'export GOROOT=/usr/local/go' >> $HOME/.local/.bash_inc || true; \
-        [[ $(grep -Fx 'export GOBIN=$GOPATH/bin' $HOME/.local/.bash_inc) == "" ]] && echo 'export GOBIN=$GOPATH/bin' >> $HOME/.local/.bash_inc || true; \
-        [[ $(grep -Fx 'export PATH=$GOPATH:$GOROOT/bin:$HOME/bin:$HOME/.local/bin:$PATH' $HOME/.local/.bash_inc) == "" ]] && echo 'export PATH=$GOPATH:$GOROOT/bin:$HOME/bin:$HOME/.local/bin:$PATH' >> $HOME/.local/.bash_inc || true; } || true
+    [[ ! -f "$HOME/.local/.bash_inc" ]] && touch $HOME/.local/.bash_inc || true
+    [[ $(grep -Fx 'export GOPATH=$HOME/go' $HOME/.local/.bash_inc) == "" ]] && echo 'export GOPATH=$HOME/go' > $HOME/.local/.bash_inc || true
+    [[ $(grep -Fx 'export GOROOT=/usr/local/go' $HOME/.local/.bash_inc) == "" ]] && echo 'export GOROOT=/usr/local/go' >> $HOME/.local/.bash_inc || true
+    [[ $(grep -Fx 'export GOBIN=$GOPATH/bin' $HOME/.local/.bash_inc) == "" ]] && echo 'export GOBIN=$GOPATH/bin' >> $HOME/.local/.bash_inc || true
+    [[ $(grep -Fx 'export PATH=$GOPATH:$GOBIN:$GOROOT/bin:$HOME/bin:$HOME/.local/bin:$PATH' $HOME/.local/.bash_inc) == "" ]] && echo 'export PATH=$GOPATH:$GOBIN:$GOROOT/bin:$HOME/bin:$HOME/.local/bin:$PATH' >> $HOME/.local/.bash_inc || true
     [[ -f $HOME/.local/.bash_inc ]] && { [[ $(grep -Fx '[[ -f $HOME/.local/.bash_inc ]] && . $HOME/.local/.bash_inc' ~/.bashrc) == "" ]] && echo '[[ -f $HOME/.local/.bash_inc ]] && . $HOME/.local/.bash_inc' >> ~/.bashrc || true; } || true
     [[ -f $HOME/.local/.shell_inc ]] && { [[ $(grep -Fx '[[ -f $HOME/.local/.shell_inc ]] && . $HOME/.local/.shell_inc' ~/.bashrc) == "" ]] && echo '[[ -f $HOME/.local/.shell_inc ]] && . $HOME/.local/.shell_inc' >> ~/.bashrc || true; } || true
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
