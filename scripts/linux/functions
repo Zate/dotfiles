@@ -6,6 +6,7 @@ installLinux () {
     [[ $D_GO == true ]] && installGo || true
     installShellInc || true
     proj || true
+    installPosh || true
     upPath || true
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
     return 0
@@ -31,6 +32,18 @@ installShellInc () {
     return 0
 }
 
+installPosh () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    # Check if ~/bin exists
+    [[ ! -d "$HOME/bin" ]] && mkdir -p $HOME/bin || true
+    # Install posh
+    [[ ! -f "$HOME/bin/oh-my-posh" ]] && { echo "Installing oh-my-posh"; } || { echo "oh-my-posh already installed"; return 0; }
+    curl -s https://ohmyposh.dev/install.sh | bash -s -- -d ~/bin
+    chmod +x $HOME/bin/oh-my-posh
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
+}
+
 cleanLinux () {
     [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
     [[ -d "/usr/local/go" ]] && { echo "Removing /usr/local/go"; sudo rm -rf /usr/local/go; } || true
@@ -47,10 +60,15 @@ cleanLinux () {
 }
 
 proj () {
+    [[ $D_DEBUG == true ]] && echo "start $FUNCNAME"
+    # Check if ~/projects exists
+    [[ ! -d "$HOME/projects" ]] && mkdir -p $HOME/projects || true
     mkdir -p $GOPATH/src/github.com
     mkdir -p ~/projects/github
     [[ ! -L "$GOPATH/src/github.com/Zate" ]] && { ln -s $HOME/projects/github $GOPATH/src/github.com/Zate; } || true
     [[ ! -L "$GOPATH/src/github.com/zate" ]] && { ln -s $HOME/projects/github $GOPATH/src/github.com/zate;  } || true
+    [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
+    return 0
 }
 
 git_config () {

@@ -51,15 +51,17 @@ upPath () {
     [[ $(grep -Fx 'export GOROOT=/usr/local/go' $HOME/.local/.bash_inc) == "" ]] && echo 'export GOROOT=/usr/local/go' >> $HOME/.local/.bash_inc || true
     [[ $(grep -Fx 'export GOBIN=$GOPATH/bin' $HOME/.local/.bash_inc) == "" ]] && echo 'export GOBIN=$GOPATH/bin' >> $HOME/.local/.bash_inc || true
     [[ $(grep -Fx 'export PATH=$GOPATH:$GOBIN:$GOROOT/bin:$HOME/bin:$HOME/.local/bin:$PATH' $HOME/.local/.bash_inc) == "" ]] && echo 'export PATH=$GOPATH:$GOBIN:$GOROOT/bin:$HOME/bin:$HOME/.local/bin:$PATH' >> $HOME/.local/.bash_inc || true
-    [[ -f $HOME/.local/.bash_inc ]] && { [[ $(grep -Fx '[[ -f $HOME/.local/.bash_inc ]] && . $HOME/.local/.bash_inc' ~/.bashrc) == "" ]] && echo '[[ -f $HOME/.local/.bash_inc ]] && . $HOME/.local/.bash_inc' >> ~/.bashrc || true; } || true
-    [[ -f $HOME/.local/.shell_inc ]] && { [[ $(grep -Fx '[[ -f $HOME/.local/.shell_inc ]] && . $HOME/.local/.shell_inc' ~/.bashrc) == "" ]] && echo '[[ -f $HOME/.local/.shell_inc ]] && . $HOME/.local/.shell_inc' >> ~/.bashrc || true; } || true
+    # If ~/bin/oh-my-posh exists, check that 'eval "$(oh-my-posh init zsh)"' is in the appropriate shel rc file
+    [[ -f $HOME/bin/oh-my-posh ]] && { [[ $(grep -Fx 'eval "$(oh-my-posh init $SHELL_TYPE)"' ~/$SHELL_RC) == "" ]] && echo 'eval "$(oh-my-posh init $SHELL_TYPE)"' >> ~/$SHELL_RC || true; } || true
+    [[ -f $HOME/.local/.bash_inc ]] && { [[ $(grep -Fx '[[ -f $HOME/.local/.bash_inc ]] && . $HOME/.local/.bash_inc' ~/.bashrc) == "" ]] && echo '[[ -f $HOME/.local/.bash_inc ]] && . $HOME/.local/.bash_inc' >> ~/$SHELL_RC || true; } || true
+    [[ -f $HOME/.local/.shell_inc ]] && { [[ $(grep -Fx '[[ -f $HOME/.local/.shell_inc ]] && . $HOME/.local/.shell_inc' ~/.bashrc) == "" ]] && echo '[[ -f $HOME/.local/.shell_inc ]] && . $HOME/.local/.shell_inc' >> ~/$SHELL_RC || true; } || true
     [[ $D_DEBUG == true ]] && echo "end $FUNCNAME"
 }
 
 apt-stuff () {
     echo "Installing via apt-get"
     DEBIAN_FRONTEND=noninteractive
-    PKGS="curl wget git apt-transport-https ca-certificates software-properties-common"
+    PKGS="curl wget git apt-transport-https ca-certificates software-properties-common unzip"
     sudo apt-get update -qq -o=Dpkg::Use-Pty=0 > /dev/null
     sudo apt-get upgrade -qq -y -o=Dpkg::Use-Pty=0 > /dev/null
     sudo apt-get -qq -y install -o=Dpkg::Use-Pty=0 $PKGS > /dev/null

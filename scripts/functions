@@ -13,6 +13,7 @@ unset_d () {
     PKGS=""
     DEBIAN_FRONTEND=""
     MY_SHELL="/bin/bash"
+    SHELL_RC=".bashrc"
     MY_OS="linux"
     OS="linux"
     ARCH="amd64"
@@ -46,6 +47,7 @@ check_shell () {
             MY_SHELL=$SHELL || true
             D_BASH=true || true
             D_SHELL="bash" || true
+            SHELL_RC=".bashrc"
             [[ -f "shell/bash/functions" ]] && source shell/bash/functions || true
             ;;
         */zsh)
@@ -53,6 +55,7 @@ check_shell () {
             MY_SHELL=$SHELL || true
             D_ZSH=true || true
             D_SHELL="zsh" || true
+            SHELL_RC=".zshrc"
             [[ -f "shell/zsh/functions" ]] && source shell/zsh/functions || true
             ;;
         *)
