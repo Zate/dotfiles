@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  # Ubuntu testing environment
+  ubuntu:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: dotfiles-test
+    image: dotfiles-test:ubuntu
+    container_name: dotfiles-ubuntu
+    volumes:
+      - ..:/home/testuser/dotfiles
+    working_dir: /home/testuser/dotfiles
+    stdin_open: true
+    tty: true
+
+  # Debian testing environment
+  debian:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.debian
+      target: dotfiles-test
+    image: dotfiles-test:debian
+    container_name: dotfiles-debian
+    volumes:
+      - ..:/home/testuser/dotfiles
+    working_dir: /home/testuser/dotfiles
+    stdin_open: true
+    tty: true

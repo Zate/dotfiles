@@ -1,0 +1,222 @@
+#!/usr/bin/env bash
+#
+# dotfiles - Main CLI for dotfiles management
+#
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export DOTFILES_DIR="$(dirname "${SCRIPT_DIR}")"
+
+# Source libraries
+source "${SCRIPT_DIR}/lib/core.sh"
+source "${SCRIPT_DIR}/lib/module.sh"
+source "${SCRIPT_DIR}/lib/doctor.sh"
+
+# Default modules
+DEFAULT_MODULES=("fonts" "go" "git" "oh-my-posh")
+
+#
+# Usage information
+#
+
+usage() {
+    cat <<EOF
+dotfiles - Cross-platform dotfiles management
+
+Usage: dotfiles <command> [options] [modules...]
+
+Commands:
+    install [modules...]    Install modules (defaults: ${DEFAULT_MODULES[*]})
+    update [modules...]     Update modules (all if none specified)
+    uninstall <modules...>  Uninstall modules
+    doctor [modules...]     Run health checks (installed modules if none specified)
+    list                    List available modules
+    status                  Show installation status
+    help                    Show this help message
+
+Options:
+    -v, --verbose          Verbose output
+    -d, --debug            Debug output
+    -h, --help             Show help
+
+Examples:
+    dotfiles install                    # Install default modules
+    dotfiles install go oh-my-posh      # Install specific modules
+    dotfiles update                     # Update all installed modules
+    dotfiles update go                  # Update specific module
+    dotfiles doctor                     # Check all installed modules
+    dotfiles doctor go fonts            # Check specific modules
+    dotfiles list                       # List available modules
+    dotfiles status                     # Show what's installed
+    dotfiles uninstall oh-my-posh       # Uninstall a module
+
+Environment:
+    DOTFILES_DEBUG=true     Enable debug output
+    DOTFILES_VERBOSE=true   Enable verbose output
+
+EOF
+}
+
+#
+# Command handlers
+#
+
+cmd_install() {
+    local modules=("$@")
+
+    if [[ ${#modules[@]} -eq 0 ]]; then
+        modules=("${DEFAULT_MODULES[@]}")
+        log_info "Installing default modules: ${modules[*]}"
+    fi
+
+    install_modules "${modules[@]}"
+}
+
+cmd_update() {
+    local modules=("$@")
+
+    if [[ ${#modules[@]} -eq 0 ]]; then
+        log_info "Updating all installed modules"
+    fi
+
+    update_modules "${modules[@]}"
+}
+
+cmd_uninstall() {
+    local modules=("$@")
+
+    if [[ ${#modules[@]} -eq 0 ]]; then
+        die "Please specify modules to uninstall"
+    fi
+
+    uninstall_modules "${modules[@]}"
+}
+
+cmd_doctor() {
+    local modules=("$@")
+
+    run_all_checks "${modules[@]}"
+}
+
+cmd_list() {
+    log_step "Available modules:"
+    echo ""
+
+    local modules
+    mapfile -t modules < <(list_available_modules | sort)
+
+    for module in "${modules[@]}"; do
+        local desc
+        desc=$(get_module_info "${module}" "DESCRIPTION")
+
+        local status=""
+        if is_installed "${module}"; then
+            local version
+            version=$(get_installed_version "${module}")
+            status=" ${GREEN}[installed: ${version}]${NC}"
+        fi
+
+        printf "  %-15s %s%b\n" "${module}" "${desc}" "${status}"
+    done
+
+    echo ""
+}
+
+cmd_status() {
+    log_step "Installation status:"
+    echo ""
+
+    local installed_modules
+    mapfile -t installed_modules < <(get_installed_modules | sort)
+
+    if [[ ${#installed_modules[@]} -eq 0 ]]; then
+        log_info "No modules installed"
+        return 0
+    fi
+
+    for module in "${installed_modules[@]}"; do
+        local version
+        version=$(get_installed_version "${module}")
+
+        local desc
+        desc=$(get_module_info "${module}" "DESCRIPTION")
+
+        printf "  ${GREEN}✓${NC} %-15s %-10s %s\n" "${module}" "${version}" "${desc}"
+    done
+
+    echo ""
+    log_info "Total: ${#installed_modules[@]} module(s) installed"
+}
+
+#
+# Main
+#
+
+main() {
+    # Parse global options
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -v|--verbose)
+                export DOTFILES_VERBOSE=true
+                shift
+                ;;
+            -d|--debug)
+                export DOTFILES_DEBUG=true
+                export DOTFILES_VERBOSE=true
+                shift
+                ;;
+            -*)
+                die "Unknown option: $1"
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    # Get command
+    local command="${1:-help}"
+    shift || true
+
+    # Run command
+    case "${command}" in
+        install)
+            cmd_install "$@"
+            ;;
+        update)
+            cmd_update "$@"
+            ;;
+        uninstall)
+            cmd_uninstall "$@"
+            ;;
+        doctor)
+            cmd_doctor "$@"
+            ;;
+        list)
+            cmd_list "$@"
+            ;;
+        status)
+            cmd_status "$@"
+            ;;
+        help|--help|-h)
+            usage
+            exit 0
+            ;;
+        *)
+            log_error "Unknown command: ${command}"
+            echo ""
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"

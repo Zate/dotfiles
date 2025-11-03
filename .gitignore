@@ -1,1 +1,20 @@
 terraform*.zip
+
+# Temporary documentation and planning files
+TEMP-*.md
+
+# Backup files
+*.old
+*.bak
+*.swp
+*~
+
+# State and user configs
+state/
+config/user.conf
+
+# Editor configs
+.vscode/
+
+# Test logs
+/tmp/*.log

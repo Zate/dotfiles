@@ -1,0 +1,19 @@
+# Git
+.git
+.gitignore
+
+# State files
+state/
+
+# Old files
+install.old
+scripts/
+
+# Documentation (not needed in container)
+TEMP-*.md
+
+# VSCode
+.vscode/
+
+# Claude
+.claude/

@@ -1,111 +1,58 @@
 #!/usr/bin/env bash
-set -e
+#
+# install - Backward-compatible wrapper for new dotfiles system
+#
+
+set -o errexit
+set -o nounset
 set -o pipefail
-unset D_DEBUG
-ARGS=""
 
-. scripts/functions
-. scripts/shell_inc
-unset_d
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-defaults () {
-    echo "Usage: $0 [--go] [--aws] [--tf] [--docker] [--code] [--d] [--test] [--clean]"
-    exit 1
-}
+# Show migration message
+cat <<'EOF'
+╔══════════════════════════════════════════════════════════╗
+║                                                          ║
+║  Dotfiles has been modernized!                          ║
+║                                                          ║
+║  New commands:                                           ║
+║    make setup      - First-time setup                   ║
+║    make install    - Install default modules            ║
+║    make update     - Update all modules                 ║
+║    make doctor     - Health check                       ║
+║    make list       - List available modules             ║
+║    make status     - Show what's installed              ║
+║                                                          ║
+║  Or use the CLI directly:                               ║
+║    ./bin/dotfiles install                               ║
+║    ./bin/dotfiles doctor                                ║
+║                                                          ║
+╚══════════════════════════════════════════════════════════╝
 
-while getopts ":-:" option; do
-  case "${option}" in
-    -)
-        case "${OPTARG}" in
-            "go")
-                IGO=true
-                D_GO=true
-                echo "Enabling go"
-                ;;
-            "aws")
-                IAWS=true
-                echo "Enabling aws"
-                ;;
-            "tf")
-                ITF=true
-                echo "Enabling terraform"
-                ;;
-            "docker")
-                IDOCKER=true
-                echo "Enabling docker"
-                ;;
-            "code")
-                ICODESERVER=true
-                echo "Enabling code server"
-                ;;
-            "d")
-                D_DEBUG=true
-                echo "Enabling debug"
-                ;;
-            "test")
-                echo -n "$*"
-                exit 0
-                ;;
-            "clean")
-                echo "Cleaning up"
-                DOCLEAN=true
-                ;;
-            *)
-                defaults
-                ;;
-        esac
-        ;;
-    *)
-      defaults
-      ;;
-  esac
-done
+EOF
 
-BASEDIR=$(dirname $0)
-cd $BASEDIR
+# Ask if they want to proceed with new system
+read -rp "Run the new setup now? [Y/n] " response
+response="${response:-y}"
 
-echo "Running check_prereqs"
-check_prereqs
-case "${D_OS}" in
-    linux*)
-        . scripts/linux/functions
-        . scripts/linux/shell_inc
-        [[ $DOCLEAN == true ]] && { echo "Cleaning up installed files and entries on Linux"; cleanLinux; } || { echo "Installing for Linux using apt and native installers"; installLinux; }
-        ;;
-    macos*)
-        echo "Installing for MacOS using HomeBrew"
-        . scripts/macos/functions
-        . scripts/macos/shell_inc
-         [[ $DOCLEAN == true ]] && echo "Not Yet implemented" || installMacOS
-        ;;
-    *)
-        echo "Unknown operating system"
-        exit 1
-        ;;
-esac
-# [[ $D_ZSH == "true" && $D_SHELL == "zsh" ]] && install_zsh_inc || install_bash_inc
-# [[ $D_ZSH == "true" && $D_SHELL == "zsh" ]] && install_zsh_rc || install_bash_rc
-# [[ $D_ZSH == "true" && $D_SHELL == "zsh" ]] && echo "zsh: $D_SHELL" || echo "bash: $D_SHELL"
+if [[ "${response}" =~ ^[Yy]$ ]]; then
+    echo ""
+    echo "Running setup..."
+    "${SCRIPT_DIR}/bin/dotfiles-setup"
 
-# [[ $IGO == true ]] && install_go || true
-# [[ $IGO == true ]] && install_go_tools || true
-# [[ $IAWS == true ]] && install_aws || true
-# [[ $ITF == true ]] && install_terraform || true
-# [[ $IDOCKER = true ]] && install_docker || true
-# [[ $IDC == true ]] && install_docker_compose || true
-# [[ $ICODESERVER = true ]] && install_code_server || true
+    echo ""
+    read -rp "Install default modules (fonts, go, git, oh-my-posh)? [Y/n] " install_response
+    install_response="${install_response:-y}"
 
-
-# ln -s ${PWD}/terraformrc ~/.terraformrc
-
-[[ $D_DEBUG == "true" ]] && debug_output || true
-
-
-
-
-
-
-
-
-
-
+    if [[ "${install_response}" =~ ^[Yy]$ ]]; then
+        echo ""
+        "${SCRIPT_DIR}/bin/dotfiles" install
+    fi
+else
+    echo ""
+    echo "No problem! When you're ready:"
+    echo "  ./bin/dotfiles-setup"
+    echo "  ./bin/dotfiles install"
+    echo ""
+    echo "The old install script is available at: ./install.old"
+fi

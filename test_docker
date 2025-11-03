@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-set -e
-BASEDIR=$(dirname $0)
-cd $BASEDIR
-
-docker build -t zate75/dotfiles docker/
-docker run -v `pwd`:/home/dev/.dotfiles -it zate75/dotfiles:latest /bin/bash
