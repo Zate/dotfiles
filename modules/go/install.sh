@@ -58,14 +58,25 @@ install_go_macos() {
 
     log_info "Installing Go via Homebrew..."
 
-    # Check if brew is available
-    require_command "brew" "Install Homebrew from https://brew.sh"
+    # Use the brew_install_package helper which ensures proper linking
+    brew_install_package "go" "go"
 
-    # Install or upgrade go
-    if brew list go &>/dev/null; then
-        brew upgrade go || true
-    else
-        brew install go
+    # Double-check the command is available
+    if ! command_exists go; then
+        log_warning "go command not found after installation"
+        log_info "Attempting to link go..."
+
+        # Try explicit linking
+        if brew link --overwrite go 2>/dev/null; then
+            log_success "Successfully linked go"
+        else
+            die "Failed to link go. Please run: brew link --overwrite go"
+        fi
+
+        # Verify again
+        if ! command_exists go; then
+            die "go still not available. PATH may need to include $(brew --prefix)/bin"
+        fi
     fi
 
     local installed_version

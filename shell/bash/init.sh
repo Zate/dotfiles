@@ -14,5 +14,12 @@ if [[ -d "${DOTFILES_DIR}/shell/bash/modules.d" ]]; then
     done
 fi
 
-# Load user customizations if they exist
+# Load user customizations from ~/.local/.dotfiles.d/
+if [[ -d "${HOME}/.local/.dotfiles.d" ]]; then
+    for custom in "${HOME}/.local/.dotfiles.d"/*.sh; do
+        [[ -f "${custom}" ]] && source "${custom}"
+    done
+fi
+
+# Backwards compatibility: load single custom file if it exists
 [[ -f "${HOME}/.bash_local" ]] && source "${HOME}/.bash_local"

@@ -24,13 +24,23 @@ if [[ -z "${RED:-}" ]]; then
     readonly NC='\033[0m' # No Color
 fi
 
-# Dotfiles directory
-export DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
-export DOTFILES_BIN="${DOTFILES_DIR}/bin"
+# Dotfiles directories
+# DOTFILES_REPO: The repository location (source for modules, scripts)
+# DOTFILES_HOME: The runtime location (destination for shell modules, state)
+export DOTFILES_REPO="${DOTFILES_REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+export DOTFILES_HOME="${DOTFILES_HOME:-${HOME}/.dotfiles}"
+
+# Backwards compatibility
+export DOTFILES_DIR="${DOTFILES_REPO}"
+
+# Repository paths (source)
+export DOTFILES_BIN="${DOTFILES_REPO}/bin"
 export DOTFILES_LIB="${DOTFILES_BIN}/lib"
-export DOTFILES_MODULES="${DOTFILES_DIR}/modules"
-export DOTFILES_STATE="${DOTFILES_DIR}/state"
-export DOTFILES_CONFIG="${DOTFILES_DIR}/config"
+export DOTFILES_MODULES="${DOTFILES_REPO}/modules"
+
+# Runtime paths (destination)
+export DOTFILES_STATE="${DOTFILES_HOME}/state"
+export DOTFILES_CONFIG="${DOTFILES_HOME}/config"
 
 # Debug mode
 export DOTFILES_DEBUG="${DOTFILES_DEBUG:-false}"
@@ -251,6 +261,100 @@ require_command() {
     return 0
 }
 
+#
+# Homebrew helpers (macOS)
+#
+
+ensure_brew_installed() {
+    if [[ "${DOTFILES_OS}" != "macos" ]]; then
+        return 0
+    fi
+
+    if ! command_exists brew; then
+        die "Homebrew is required on macOS but not found. Install from https://brew.sh"
+    fi
+
+    log_debug "Homebrew is installed"
+    return 0
+}
+
+brew_ensure_linked() {
+    local package="$1"
+
+    if [[ "${DOTFILES_OS}" != "macos" ]]; then
+        return 0
+    fi
+
+    # Check if package provides any binaries
+    local brew_prefix
+    brew_prefix=$(brew --prefix "${package}" 2>/dev/null) || return 1
+
+    if [[ ! -d "${brew_prefix}/bin" ]]; then
+        log_debug "Package ${package} has no binaries to link"
+        return 0
+    fi
+
+    # Check if binaries are accessible in PATH
+    local needs_linking=false
+    for binary in "${brew_prefix}/bin"/*; do
+        local bin_name
+        bin_name=$(basename "${binary}")
+
+        if ! command_exists "${bin_name}"; then
+            needs_linking=true
+            break
+        fi
+    done
+
+    if [[ "${needs_linking}" == "true" ]]; then
+        log_info "Linking ${package}..."
+        if brew link --overwrite "${package}" >/dev/null 2>&1; then
+            log_success "Successfully linked ${package}"
+        else
+            log_warning "Could not link ${package} automatically"
+            return 1
+        fi
+    else
+        log_debug "Package ${package} is already linked"
+    fi
+
+    return 0
+}
+
+brew_install_package() {
+    local package="$1"
+    local verify_command="${2:-${package}}"  # Command to verify, defaults to package name
+
+    if [[ "${DOTFILES_OS}" != "macos" ]]; then
+        log_error "brew_install_package called on non-macOS system"
+        return 1
+    fi
+
+    ensure_brew_installed
+
+    # Install or upgrade
+    if brew list "${package}" &>/dev/null; then
+        log_info "Upgrading ${package}..."
+        brew upgrade "${package}" 2>/dev/null || log_debug "${package} already at latest version"
+    else
+        log_info "Installing ${package}..."
+        brew install "${package}"
+    fi
+
+    # Ensure it's linked
+    brew_ensure_linked "${package}"
+
+    # Verify the command is available
+    if [[ -n "${verify_command}" ]] && ! command_exists "${verify_command}"; then
+        log_warning "${verify_command} command still not available after install"
+        log_info "You may need to restart your shell or check your PATH"
+        return 1
+    fi
+
+    log_success "${package} installed and verified"
+    return 0
+}
+
 check_command() {
     local cmd="$1"
 
@@ -373,12 +477,12 @@ get_installed_modules() {
 
 get_shell_config_dir() {
     local shell="${1:-${DOTFILES_SHELL}}"
-    echo "${DOTFILES_DIR}/shell/${shell}"
+    echo "${DOTFILES_HOME}/shell/${shell}"
 }
 
 get_shell_modules_dir() {
     local shell="${1:-${DOTFILES_SHELL}}"
-    echo "${DOTFILES_DIR}/shell/${shell}/modules.d"
+    echo "${DOTFILES_HOME}/shell/${shell}/modules.d"
 }
 
 create_shell_module() {

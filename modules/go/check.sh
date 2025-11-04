@@ -9,7 +9,24 @@ check_go() {
     log_step "Checking Go installation..."
 
     # Check go command
-    doctor_check_command "go"
+    if ! command_exists go; then
+        # Check if installed via Homebrew but not linked (macOS)
+        if [[ "${DOTFILES_OS}" == "macos" ]] && command_exists brew; then
+            if brew list go &>/dev/null; then
+                doctor_check "go" "fail" "go installed via Homebrew but not linked"
+                log_info "  Fix: Run 'brew link --overwrite go'"
+                return 0
+            else
+                doctor_check "go" "fail" "go command not found"
+                return 0
+            fi
+        else
+            doctor_check "go" "fail" "go command not found"
+            return 0
+        fi
+    fi
+
+    doctor_check "go" "pass" "go command is available"
 
     if command_exists go; then
         # Check version

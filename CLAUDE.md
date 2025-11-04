@@ -32,6 +32,8 @@ This is a modern, modular dotfiles repository that provides cross-platform shell
 **bin/lib/doctor.sh** - Health check framework
 - Check result tracking
 - Common health check functions (doctor_check_command, doctor_check_file, etc.)
+- File sync validation (doctor_check_file_sync, fix_file_sync)
+- Shell setup validation and fixing (check_shell_setup, fix_shell_setup)
 - Module check runner
 - Summary reporting
 
@@ -134,8 +136,9 @@ make test-clean              # Clean up Docker artifacts
 # Direct CLI usage
 ./bin/dotfiles install go oh-my-posh
 ./bin/dotfiles update
-./bin/dotfiles doctor
-./bin/dotfiles --debug install  # Debug mode
+./bin/dotfiles doctor                # Run health checks
+./bin/dotfiles doctor --fix          # Fix outdated runtime files
+./bin/dotfiles --debug install       # Debug mode
 ```
 
 ### Adding a New Module
@@ -227,6 +230,37 @@ SHELLS="bash zsh"
 - Atomic operations where possible
 - Backup files before modification
 
+### Installation Behavior
+
+By default, the install command skips modules that are already installed:
+
+```bash
+dotfiles install              # Skips already installed modules
+dotfiles install --force      # Forces reinstall of all modules
+dotfiles install --ask go     # Prompts before reinstalling if already installed
+```
+
+**Flags:**
+- Default (no flags): Skip modules that are marked as installed
+- `--force`: Force reinstall even if already installed
+- `--ask`: Prompt interactively before reinstalling already installed modules
+
+This prevents accidental reinstalls and makes the install command idempotent and safe to run multiple times.
+
+### Custom User Configuration
+
+Users can add custom shell configuration files to `~/.local/.dotfiles.d/`. All `.sh` files in this directory are automatically loaded after module configurations:
+
+```bash
+mkdir -p ~/.local/.dotfiles.d
+echo 'export MY_VAR="value"' > ~/.local/.dotfiles.d/custom.sh
+# Opens new shell - MY_VAR is now available
+```
+
+This provides a clean separation between repository-managed configurations and user-specific customizations that should not be committed to git.
+
+**Backwards Compatibility:** The system still loads `~/.bash_local` or `~/.zsh_local` if they exist, but the new directory-based approach is recommended.
+
 ### Shell RC Integration
 
 The setup script adds ONE line to ~/.bashrc or ~/.zshrc:
@@ -281,7 +315,23 @@ export PATH=\"\${HOME}/bin:\${PATH}\"
 doctor_check_command "binary"
 doctor_check_file "${HOME}/.config/file"
 doctor_check_env_var "GOPATH"
+doctor_check_file_sync "${DOTFILES_REPO}/file" "${HOME}/.dotfiles/file" "description"
 ```
+
+### File Sync Validation
+
+The doctor command automatically checks if runtime files (in `~/.dotfiles/`) are in sync with the repository files (in `~/dotfiles/`). This is critical for ensuring that updates to the repository (via `git pull`) are properly reflected in the active shell configuration.
+
+**Checked Files:**
+- `shell/{bash,zsh}/init.sh` - Main initialization files
+
+**Usage:**
+```bash
+dotfiles doctor           # Reports outdated files as failures
+dotfiles doctor --fix     # Automatically updates outdated files (creates backups)
+```
+
+After running `git pull` to update the repository, run `dotfiles doctor` to check if runtime files need updating, then use `dotfiles doctor --fix` to apply updates.
 
 ## Testing Guidelines
 

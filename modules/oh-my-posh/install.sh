@@ -36,12 +36,25 @@ install_oh_my_posh_linux() {
 install_oh_my_posh_macos() {
     log_info "Installing oh-my-posh via Homebrew..."
 
-    require_command "brew" "Install Homebrew from https://brew.sh"
+    # Use the brew_install_package helper which ensures proper linking
+    brew_install_package "oh-my-posh" "oh-my-posh"
 
-    if brew list oh-my-posh &>/dev/null; then
-        brew upgrade oh-my-posh || true
-    else
-        brew install oh-my-posh
+    # Double-check the command is available
+    if ! command_exists oh-my-posh; then
+        log_warning "oh-my-posh command not found after installation"
+        log_info "Attempting to link oh-my-posh..."
+
+        # Try explicit linking
+        if brew link --overwrite oh-my-posh 2>/dev/null; then
+            log_success "Successfully linked oh-my-posh"
+        else
+            die "Failed to link oh-my-posh. Please run: brew link --overwrite oh-my-posh"
+        fi
+
+        # Verify again
+        if ! command_exists oh-my-posh; then
+            die "oh-my-posh still not available. PATH may need to include $(brew --prefix)/bin"
+        fi
     fi
 
     log_success "oh-my-posh installed via Homebrew"

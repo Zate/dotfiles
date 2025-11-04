@@ -162,6 +162,64 @@ doctor_check_env_var() {
     fi
 }
 
+doctor_check_file_sync() {
+    local repo_file="$1"
+    local runtime_file="$2"
+    local name="$3"
+
+    if [[ ! -f "${repo_file}" ]]; then
+        doctor_check "${name}" "fail" "Repo file not found: ${repo_file}"
+        return
+    fi
+
+    if [[ ! -f "${runtime_file}" ]]; then
+        doctor_check "${name}" "fail" "Runtime file not found: ${runtime_file}"
+        return
+    fi
+
+    # Compare files using diff
+    if diff -q "${repo_file}" "${runtime_file}" >/dev/null 2>&1; then
+        doctor_check "${name}" "pass" "${name} is up to date"
+    else
+        doctor_check "${name}" "fail" "${name} is outdated (differs from repo)"
+        log_info "  Run: dotfiles doctor --fix"
+    fi
+}
+
+fix_file_sync() {
+    local repo_file="$1"
+    local runtime_file="$2"
+    local name="$3"
+
+    if [[ ! -f "${repo_file}" ]]; then
+        log_error "Cannot fix ${name}: repo file not found: ${repo_file}"
+        return 1
+    fi
+
+    log_info "Updating ${name}..."
+
+    # Create directory if it doesn't exist
+    local runtime_dir
+    runtime_dir=$(dirname "${runtime_file}")
+    mkdir -p "${runtime_dir}"
+
+    # Backup existing file if it exists
+    if [[ -f "${runtime_file}" ]]; then
+        local backup="${runtime_file}.backup"
+        cp "${runtime_file}" "${backup}"
+        log_debug "Backed up to ${backup}"
+    fi
+
+    # Copy updated file
+    if cp "${repo_file}" "${runtime_file}"; then
+        log_success "Updated ${name}"
+        return 0
+    else
+        log_error "Failed to update ${name}"
+        return 1
+    fi
+}
+
 #
 # Module health check runner
 #
@@ -178,8 +236,8 @@ run_module_check() {
     log_step "Checking ${module}..."
     doctor_reset
 
-    # Source and run the check script
-    if bash "${check_script}"; then
+    # Source the check script (not bash subprocess) so counters are shared
+    if source "${check_script}"; then
         doctor_summary
         return 0
     else
@@ -188,8 +246,149 @@ run_module_check() {
     fi
 }
 
+fix_shell_setup() {
+    log_step "Fixing shell setup..."
+
+    # Detect current shell
+    local shell_type
+    case "${SHELL}" in
+        */bash) shell_type="bash" ;;
+        */zsh) shell_type="zsh" ;;
+        *)
+            log_error "Unknown shell: ${SHELL}"
+            return 1
+            ;;
+    esac
+
+    local fixed=0
+    local failed=0
+
+    # Fix init.sh if outdated
+    local repo_init="${DOTFILES_REPO}/shell/${shell_type}/init.sh"
+    local runtime_init="${HOME}/.dotfiles/shell/${shell_type}/init.sh"
+
+    if [[ -f "${repo_init}" && -f "${runtime_init}" ]]; then
+        if ! diff -q "${repo_init}" "${runtime_init}" >/dev/null 2>&1; then
+            if fix_file_sync "${repo_init}" "${runtime_init}" "init.sh"; then
+                fixed=$((fixed + 1))
+            else
+                failed=$((failed + 1))
+            fi
+        fi
+    fi
+
+    if [[ ${failed} -eq 0 ]]; then
+        log_success "Fixed ${fixed} file(s)"
+        return 0
+    else
+        log_error "Failed to fix ${failed} file(s)"
+        return 1
+    fi
+}
+
+check_shell_setup() {
+    log_step "Checking shell setup..."
+    doctor_reset
+
+    # Detect current shell
+    local shell_type
+    case "${SHELL}" in
+        */bash) shell_type="bash" ;;
+        */zsh) shell_type="zsh" ;;
+        *) shell_type="unknown" ;;
+    esac
+
+    if [[ "${shell_type}" == "unknown" ]]; then
+        doctor_check "shell" "fail" "Unknown shell: ${SHELL}"
+        return 1
+    fi
+
+    doctor_check "shell" "pass" "Detected shell: ${shell_type}"
+
+    # Check shell RC file
+    local shell_rc="${HOME}/.${shell_type}rc"
+    if [[ ! -f "${shell_rc}" ]]; then
+        doctor_check "shell-rc" "fail" "${shell_rc} not found"
+        log_info "  Run: touch ${shell_rc}"
+        return 1
+    fi
+
+    doctor_check "shell-rc" "pass" "${shell_rc} exists"
+
+    # Check for dotfiles source line in RC file
+    local init_line="[[ -f \"\${HOME}/.dotfiles/shell/${shell_type}/init.sh\" ]] && source \"\${HOME}/.dotfiles/shell/${shell_type}/init.sh\""
+    if grep -Fq "${init_line}" "${shell_rc}" 2>/dev/null; then
+        doctor_check "shell-integration" "pass" "Dotfiles integration configured in ${shell_rc}"
+    else
+        doctor_check "shell-integration" "fail" "Dotfiles integration not found in ${shell_rc}"
+        log_info "  Run: ./bin/dotfiles-setup"
+    fi
+
+    # Check ~/.dotfiles directory structure
+    if [[ -d "${HOME}/.dotfiles" ]]; then
+        doctor_check "dotfiles-dir" "pass" "~/.dotfiles directory exists"
+    else
+        doctor_check "dotfiles-dir" "fail" "~/.dotfiles directory not found"
+        log_info "  Run: ./bin/dotfiles-setup"
+        return 1
+    fi
+
+    # Check init.sh exists
+    local init_file="${HOME}/.dotfiles/shell/${shell_type}/init.sh"
+    if [[ -f "${init_file}" ]]; then
+        doctor_check "init-file" "pass" "init.sh exists at ~/.dotfiles/shell/${shell_type}/"
+    else
+        doctor_check "init-file" "fail" "init.sh not found at ~/.dotfiles/shell/${shell_type}/"
+        log_info "  Run: ./bin/dotfiles-setup"
+    fi
+
+    # Check if init.sh is in sync with repo version
+    local repo_init="${DOTFILES_REPO}/shell/${shell_type}/init.sh"
+    if [[ -f "${init_file}" && -f "${repo_init}" ]]; then
+        doctor_check_file_sync "${repo_init}" "${init_file}" "init.sh-sync"
+    fi
+
+    # Check modules.d directory
+    local modules_dir="${HOME}/.dotfiles/shell/${shell_type}/modules.d"
+    if [[ -d "${modules_dir}" ]]; then
+        local module_count
+        module_count=$(find "${modules_dir}" -name "*.sh" 2>/dev/null | wc -l)
+        doctor_check "modules-dir" "pass" "modules.d directory exists (${module_count} module(s))"
+    else
+        doctor_check "modules-dir" "fail" "modules.d directory not found"
+        log_info "  Run: ./bin/dotfiles-setup"
+    fi
+
+    # Check for user customization directory
+    local custom_dir="${HOME}/.local/.dotfiles.d"
+    if [[ -d "${custom_dir}" ]]; then
+        local custom_count
+        custom_count=$(find "${custom_dir}" -name "*.sh" 2>/dev/null | wc -l)
+        doctor_check "custom-dir" "pass" "Custom directory exists (${custom_count} file(s))"
+    else
+        doctor_check "custom-dir" "warn" "No custom directory (${custom_dir})"
+        log_info "  Create ${custom_dir}/ and add *.sh files for user-specific customizations"
+    fi
+
+    # Backwards compatibility check
+    local custom_file="${HOME}/.${shell_type}_local"
+    if [[ -f "${custom_file}" ]]; then
+        doctor_check "legacy-custom-file" "warn" "Legacy custom file exists: ${custom_file}"
+        log_info "  Consider migrating to ${custom_dir}/ for better organization"
+    fi
+
+    doctor_summary
+    return $?
+}
+
 run_all_checks() {
     local modules=("$@")
+
+    # Always check shell setup first
+    if ! check_shell_setup; then
+        log_error "Shell setup check failed"
+        echo ""
+    fi
 
     if [[ ${#modules[@]} -eq 0 ]]; then
         # Check all installed modules

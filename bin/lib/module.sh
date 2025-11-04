@@ -68,6 +68,8 @@ is_module_supported() {
 
 install_module() {
     local module="$1"
+    local force="${DOTFILES_INSTALL_FORCE:-false}"
+    local ask="${DOTFILES_INSTALL_ASK:-false}"
 
     if ! module_exists "${module}"; then
         die "Module '${module}' does not exist"
@@ -78,9 +80,20 @@ install_module() {
         return 1
     fi
 
+    # Check if already installed
     if is_installed "${module}"; then
-        log_info "Module '${module}' is already installed"
-        if ! confirm "Reinstall ${module}?"; then
+        if [[ "${force}" == "true" ]]; then
+            log_info "Module '${module}' is already installed (forcing reinstall)"
+        elif [[ "${ask}" == "true" ]]; then
+            log_info "Module '${module}' is already installed"
+            if ! confirm "Reinstall ${module}?"; then
+                log_info "Skipping ${module}"
+                return 0
+            fi
+        else
+            # Default: skip already installed modules
+            log_info "Module '${module}' is already installed (skipping)"
+            log_info "  Use --force to reinstall, or --ask to be prompted"
             return 0
         fi
     fi

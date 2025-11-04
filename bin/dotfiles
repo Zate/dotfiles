@@ -42,13 +42,19 @@ Options:
     -v, --verbose          Verbose output
     -d, --debug            Debug output
     -h, --help             Show help
+    --force                Force reinstall even if already installed
+    --ask                  Prompt before reinstalling already installed modules
+    --fix                  Fix outdated runtime files (use with doctor)
 
 Examples:
-    dotfiles install                    # Install default modules
+    dotfiles install                    # Install default modules (skip if installed)
+    dotfiles install --force            # Force reinstall all default modules
+    dotfiles install --ask go           # Ask before reinstalling go if installed
     dotfiles install go oh-my-posh      # Install specific modules
     dotfiles update                     # Update all installed modules
     dotfiles update go                  # Update specific module
     dotfiles doctor                     # Check all installed modules
+    dotfiles doctor --fix               # Fix outdated runtime files
     dotfiles doctor go fonts            # Check specific modules
     dotfiles list                       # List available modules
     dotfiles status                     # Show what's installed
@@ -66,11 +72,41 @@ EOF
 #
 
 cmd_install() {
-    local modules=("$@")
+    local modules=()
+
+    # Parse install-specific options
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --force)
+                export DOTFILES_INSTALL_FORCE=true
+                shift
+                ;;
+            --ask)
+                export DOTFILES_INSTALL_ASK=true
+                shift
+                ;;
+            -*)
+                log_error "Unknown option: $1"
+                usage
+                exit 1
+                ;;
+            *)
+                modules+=("$1")
+                shift
+                ;;
+        esac
+    done
 
     if [[ ${#modules[@]} -eq 0 ]]; then
         modules=("${DEFAULT_MODULES[@]}")
-        log_info "Installing default modules: ${modules[*]}"
+    fi
+
+    if [[ "${DOTFILES_INSTALL_FORCE:-false}" == "true" ]]; then
+        log_info "Installing modules (force): ${modules[*]}"
+    elif [[ "${DOTFILES_INSTALL_ASK:-false}" == "true" ]]; then
+        log_info "Installing modules (interactive): ${modules[*]}"
+    else
+        log_info "Installing modules: ${modules[*]}"
     fi
 
     install_modules "${modules[@]}"
@@ -97,9 +133,35 @@ cmd_uninstall() {
 }
 
 cmd_doctor() {
-    local modules=("$@")
+    local modules=()
+    local fix_mode=false
 
-    run_all_checks "${modules[@]}"
+    # Parse doctor-specific options
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --fix)
+                fix_mode=true
+                shift
+                ;;
+            -*)
+                log_error "Unknown option: $1"
+                usage
+                exit 1
+                ;;
+            *)
+                modules+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    if [[ "${fix_mode}" == "true" ]]; then
+        # Fix mode: fix shell setup issues
+        fix_shell_setup
+    else
+        # Check mode: run health checks
+        run_all_checks "${modules[@]}"
+    fi
 }
 
 cmd_list() {

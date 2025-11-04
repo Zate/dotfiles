@@ -40,25 +40,21 @@ main() {
 
     log_info "Detected shell: ${shell_type}"
 
-    # Create symlink to ~/.dotfiles if not already there
-    if [[ ! -L "${HOME}/.dotfiles" ]]; then
-        if [[ -e "${HOME}/.dotfiles" ]]; then
-            log_warning "${HOME}/.dotfiles already exists and is not a symlink"
-            read -rp "Remove it and create symlink? [y/N] " response
-            if [[ "${response}" =~ ^[Yy]$ ]]; then
-                rm -rf "${HOME}/.dotfiles"
-            else
-                log_error "Cannot proceed without symlinking dotfiles"
-                exit 1
-            fi
-        fi
+    # Create ~/.dotfiles runtime directory structure
+    log_info "Setting up ~/.dotfiles runtime directory..."
 
-        log_info "Creating symlink: ${HOME}/.dotfiles -> ${DOTFILES_DIR}"
-        ln -sf "${DOTFILES_DIR}" "${HOME}/.dotfiles"
-        log_success "Symlink created"
-    else
-        log_success "Symlink ${HOME}/.dotfiles already exists"
-    fi
+    # Create base directories
+    mkdir -p "${HOME}/.dotfiles/shell/bash/modules.d"
+    mkdir -p "${HOME}/.dotfiles/shell/zsh/modules.d"
+    mkdir -p "${HOME}/.dotfiles/state"
+    mkdir -p "${HOME}/.dotfiles/config"
+
+    # Copy init.sh files from repo to runtime location
+    log_info "Copying shell initialization files..."
+    cp "${DOTFILES_DIR}/shell/bash/init.sh" "${HOME}/.dotfiles/shell/bash/init.sh"
+    cp "${DOTFILES_DIR}/shell/zsh/init.sh" "${HOME}/.dotfiles/shell/zsh/init.sh"
+
+    log_success "Runtime directory structure created"
 
     # Add dotfiles init to shell RC file
     local shell_rc="${HOME}/.${shell_type}rc"

@@ -13,6 +13,11 @@ TEMP-*.md
 state/
 config/user.conf
 
+# Platform-specific generated shell modules
+# (These should NOT be in the repo - they get generated in ~/.dotfiles during install)
+shell/bash/modules.d/*.sh
+shell/zsh/modules.d/*.sh
+
 # Editor configs
 .vscode/
 

@@ -9,9 +9,21 @@ check_oh_my_posh() {
     log_step "Checking oh-my-posh installation..."
 
     # Check oh-my-posh command
-    doctor_check_command "oh-my-posh"
+    if ! command_exists oh-my-posh; then
+        # Check if installed via Homebrew but not linked (macOS)
+        if [[ "${DOTFILES_OS}" == "macos" ]] && command_exists brew; then
+            if brew list oh-my-posh &>/dev/null; then
+                doctor_check "oh-my-posh" "fail" "oh-my-posh installed via Homebrew but not linked"
+                log_info "  Fix: Run 'brew link --overwrite oh-my-posh'"
+            else
+                doctor_check "oh-my-posh" "fail" "oh-my-posh command not found"
+            fi
+        else
+            doctor_check "oh-my-posh" "fail" "oh-my-posh command not found"
+        fi
+    else
+        doctor_check "oh-my-posh" "pass" "oh-my-posh command is available"
 
-    if command_exists oh-my-posh; then
         # Check version
         local version
         version=$(oh-my-posh version 2>/dev/null | head -1)
