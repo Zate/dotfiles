@@ -41,7 +41,7 @@ if [[ "${response}" =~ ^[Yy]$ ]]; then
     "${SCRIPT_DIR}/bin/dotfiles-setup"
 
     echo ""
-    read -rp "Install default modules (fonts, go, git, oh-my-posh)? [Y/n] " install_response
+    read -rp "Install default modules (fonts, go, git, oh-my-posh, fnm)? [Y/n] " install_response
     install_response="${install_response:-y}"
 
     if [[ "${install_response}" =~ ^[Yy]$ ]]; then

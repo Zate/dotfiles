@@ -10,7 +10,7 @@ help: ## Display this help message
 setup: ## Setup dotfiles (symlink to ~/.dotfiles and configure shell)
 	@./bin/dotfiles-setup
 
-install: ## Install default modules (fonts, go, git, oh-my-posh)
+install: ## Install default modules (fonts, go, git, oh-my-posh, fnm)
 	@./bin/dotfiles install
 
 update: ## Update all installed modules

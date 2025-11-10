@@ -6,7 +6,13 @@
 source "$(dirname "${BASH_SOURCE[0]}")/core.sh"
 
 # Doctor check results
-declare -A DOCTOR_RESULTS
+# Use bash 4+ associative arrays if available, fallback to simple variables
+if [[ "${BASH_VERSINFO[0]}" -ge 4 ]]; then
+    declare -A DOCTOR_RESULTS
+else
+    # For older bash versions (like macOS default), use a workaround
+    DOCTOR_RESULTS_STORE=""
+fi
 DOCTOR_PASSED=0
 DOCTOR_WARNED=0
 DOCTOR_FAILED=0
@@ -20,7 +26,13 @@ doctor_check() {
     local status="$2"  # pass, warn, fail
     local message="$3"
 
-    DOCTOR_RESULTS["${name}"]="${status}:${message}"
+    # Store results based on bash version
+    if [[ "${BASH_VERSINFO[0]}" -ge 4 ]]; then
+        DOCTOR_RESULTS["${name}"]="${status}:${message}"
+    else
+        # Fallback for older bash - append to simple string
+        DOCTOR_RESULTS_STORE="${DOCTOR_RESULTS_STORE}${name}=${status}:${message}\n"
+    fi
 
     case "${status}" in
         pass)
@@ -39,7 +51,11 @@ doctor_check() {
 }
 
 doctor_reset() {
-    DOCTOR_RESULTS=()
+    if [[ "${BASH_VERSINFO[0]}" -ge 4 ]]; then
+        DOCTOR_RESULTS=()
+    else
+        DOCTOR_RESULTS_STORE=""
+    fi
     DOCTOR_PASSED=0
     DOCTOR_WARNED=0
     DOCTOR_FAILED=0

@@ -17,7 +17,7 @@ source "${SCRIPT_DIR}/lib/module.sh"
 source "${SCRIPT_DIR}/lib/doctor.sh"
 
 # Default modules
-DEFAULT_MODULES=("fonts" "go" "git" "oh-my-posh")
+DEFAULT_MODULES=("fonts" "go" "git" "oh-my-posh" "fnm")
 
 #
 # Usage information
@@ -109,7 +109,7 @@ cmd_install() {
         log_info "Installing modules: ${modules[*]}"
     fi
 
-    install_modules "${modules[@]}"
+    install_modules "${modules[@]:-}"
 }
 
 cmd_update() {
@@ -119,7 +119,7 @@ cmd_update() {
         log_info "Updating all installed modules"
     fi
 
-    update_modules "${modules[@]}"
+    update_modules "${modules[@]:-}"
 }
 
 cmd_uninstall() {
@@ -129,7 +129,7 @@ cmd_uninstall() {
         die "Please specify modules to uninstall"
     fi
 
-    uninstall_modules "${modules[@]}"
+    uninstall_modules "${modules[@]:-}"
 }
 
 cmd_doctor() {
@@ -160,7 +160,7 @@ cmd_doctor() {
         fix_shell_setup
     else
         # Check mode: run health checks
-        run_all_checks "${modules[@]}"
+        run_all_checks "${modules[@]:-}"
     fi
 }
 
@@ -169,9 +169,17 @@ cmd_list() {
     echo ""
 
     local modules
-    mapfile -t modules < <(list_available_modules | sort)
+    # Use bash 4+ mapfile if available, otherwise use read loop for compatibility
+    if [[ "${BASH_VERSINFO[0]}" -ge 4 ]]; then
+        mapfile -t modules < <(list_available_modules | sort)
+    else
+        modules=()
+        while IFS= read -r module; do
+            modules+=("$module")
+        done < <(list_available_modules | sort)
+    fi
 
-    for module in "${modules[@]}"; do
+    for module in "${modules[@]:-}"; do
         local desc
         desc=$(get_module_info "${module}" "DESCRIPTION")
 
